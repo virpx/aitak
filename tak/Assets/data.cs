@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Linq;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
+using static data;
 
 public class data : MonoBehaviour
 {
@@ -39,14 +42,27 @@ public class data : MonoBehaviour
     public List<Bidak> papan_game = new List<Bidak>();
     public List<Bidak> bidakplayer = new List<Bidak>();
     public string selectedbidak;
-    public Bidak childrenselectedbidak;
+
+    /*variabel buat geser bidak di papan*/
+    public string statejalan = "";
+    public Bidak childrenselectedbidak = null;
     //untuk mencatat memilih menjalankan bidak ke mana : kanan/kiri/atas/bawah
     public string pilih_jalan_geser_bidak = "";
+    /*ini buat mencatat bidak yang dilepas ketika menggeser bidak, berguna untuk mensetting parent nya nanti*/
+    public Bidak bidakyangdilepas = null;
+    public int childcount = 0;
+    public string posisi_papan_awal = "";
+    /*diisi bersamaan dengan pengecekan highlight papan di milihpapan.cs*/
+    public List<string> possiblepapan = null;
+    /*=========================================*/
+
     //jika pada game merubah ke wall maka dimasukkan ke sini, inisialisasi awal semuanya capstone biasa (bukan wall)
     public int updatepenomoranbidak;
     public string selectedpapan;
     //currentplayer : 1 = white , -1 = black
     public int currentplayer = 1;
+    //untuk game paling awal, kan 1 hitam sama 1 putih ditaruh dulu
+    public int countergame = 1;
     // Start is called before the first frame update
     void Start()
     {
@@ -73,66 +89,369 @@ public class data : MonoBehaviour
     {
         
     }
-    public float taruhbidak()
+    public string get_bidak_atas(string bidakcari)
     {
-        Bidak bidakchildren = null;
-        //mencari dulu bidak yang sudah ada di papan tersebut (dicari yang paling atas/ variabel parent pada bidak null)
-        for (int i = 0; i < bidakplayer.Count; i++)
+        var nama = "";
+        Bidak currbidak = null;
+        foreach(var bidak in bidakplayer)
         {
-            if (bidakplayer[i].lokasipapan.Equals(selectedpapan))
+            if(bidak.namabidak == bidakcari)
             {
-                if (bidakplayer[i].parent == null)
+                currbidak = bidak;
+                break;
+            }
+        }
+        while(currbidak.parent != null)
+        {
+            currbidak = currbidak.parent;
+        }
+        nama = currbidak.namabidak;
+        return nama;
+    }
+    public void resetdata()
+    {
+        statejalan = "";
+        childrenselectedbidak = null;
+        pilih_jalan_geser_bidak = "";
+        bidakyangdilepas = null;
+        childcount = 0;
+        posisi_papan_awal = "";
+        possiblepapan = null;
+        selectedbidak = "";
+        selectedpapan = "";
+    }
+    public List<Bidak> get_list_bidak_papan(string req = "")
+    {
+        List<Bidak> list = new List<Bidak>();
+        if(req == "spesial")
+        {
+            List<string> lbidakskip = new List<string>();
+            if(childcount != 0)
+            {
+                //jika childcount nya sudah 0 maka yang di childrenselectedbidak tidak berlaku maka tidak perlu di masukkan ke skip
+                var currroot = childrenselectedbidak;
+                while (currroot != null)
                 {
-                    bidakchildren = bidakplayer[i];
-                    break;
+                    lbidakskip.Add(currroot.namabidak);
+                    currroot = currroot.children;
+                }
+            }
+            lbidakskip.Add(selectedbidak);
+            //supaya yang selectedbidak dan children yang belum fix di papan itu tidak masuk
+            //atau kata lain membenarkan posisi bidak paling akhir dengan bidak yang sudah ada di papan itu (jika ada)
+            foreach (var x in bidakplayer)
+            {
+                if (x.lokasipapan == selectedpapan)
+                {
+                    int masuk = 1;
+                    foreach(var cek in lbidakskip)
+                    {
+                        if(x.namabidak == cek)
+                        {
+                            masuk = 0;
+                            break;
+                        }
+                    }
+                    if(masuk == 1)
+                    {
+                        list.Add(x);
+                    }
                 }
             }
         }
-        for (int i = 0; i < bidakplayer.Count; i++)
+        else
         {
-            if (bidakplayer[i].namabidak.Contains(selectedbidak))
+            foreach (var x in bidakplayer)
             {
-                //pengecekan jika yang ingin ditumpuk itu bukan wall
-                if (bidakchildren != null && bidakchildren.penomoran == 1)
+                if (x.lokasipapan == selectedpapan)
                 {
-                    //untuk proses menumpuk bidak
-                    bidakplayer[i].children = bidakchildren;
-                    bidakplayer[i].penomoran = updatepenomoranbidak;
-                    bidakplayer[i].lokasipapan = selectedpapan;
-                    bidakchildren.parent = bidakplayer[i];
-                    int childcount = 0;
-                    var bidaksekarang = bidakplayer[i];
-                    float posisi = 0;
-                    while(bidaksekarang.children != null)
-                    {
-                        childcount++;
-                        bidaksekarang = bidaksekarang.children;
-                    }
-                    if (childcount == 1)
-                    {
-                        //dibuat seperti ini karena ketika proses menumpuk bidak 1 aman tapi kalau bidak ke 2 ketinggian
-                        posisi = 1.8f;
-                    }
-                    else
-                    {
-                        posisi = (childcount*1.3f);
-                    }
-                    currentplayer *= -1;
-                    return posisi;
+                    list.Add(x);
                 }
-                else if (bidakchildren == null)
+            }
+        }
+        return list;
+    }
+    public float setting_ulang_posisi_bidak(string namabidake)
+    {
+        float hasil = 0f;
+        foreach (var x in bidakplayer)
+        {
+            if(x.namabidak == namabidake)
+            {
+                var childrene = x.children;
+                if(childrene == null)
                 {
-                    //untuk proses menaruh bidak tanpa menumpuk
-                    bidakplayer[i].penomoran = updatepenomoranbidak;
-                    bidakplayer[i].lokasipapan = selectedpapan;
-                    currentplayer *= -1;
-                    return 1.5f;
+                    //children paling bawah seperti menaruh di papan tanpa tumpuk
+                    hasil = 1.5f;
+                }
+                else
+                {
+                    int jumlahchilde = 0;
+                    while (childrene != null)
+                    {
+                        jumlahchilde++;
+                        childrene = childrene.children; 
+                    }
+                    hasil = (jumlahchilde * 0.5f) + 1.5f;
                 }
                 break;
             }
         }
-        /*jika -1 gagal taruh bidak*/
-        return -1;
+        return hasil;
+    }
+    public void setting_parent_bidak_di_papan_pilih_untuk_selected_bidak()
+    {
+        //function ini berguna untuk mensetting parent dari bidak yang ada di papan yang dipilih, hanya umtuk bidak yang sedang dipilih
+        //(karena untuk setiap childrennya sudah di setting di lepas_children_akhir_bidak tidak dibuat satu karena bentrok dengan kode di milihpapan)
+        Bidak bidakselected = null;
+        foreach(var x in bidakplayer)
+        {
+            if(x.namabidak == selectedbidak)
+            {
+                bidakselected = x;
+                break;
+            }
+        }
+        foreach (var ambil in bidakplayer)
+        {
+            //diber if ambil.namabidak != selectedbidak karena selected bidak sudah kegeser jadi kalo tidak diberi ini akan keselect yang selected bidak
+            if (ambil.lokasipapan == selectedpapan && ambil.parent == null && ambil.namabidak != selectedbidak)
+            {
+                bidakselected.children = ambil;
+                //ambil paling atas terus parentnya diganti dengan bidak yang ingin dilepas
+                ambil.parent = bidakselected;
+            }
+        }
+    }
+    public void lepas_children_akhir_bidak(string from)
+    {
+        //mencari bidak yang sudah ada di papan 
+        var currroot = childrenselectedbidak;
+        while (currroot.children != null)
+        {
+            /*untuk mengambil children paling akhir*/
+            currroot = currroot.children;
+        };
+        if(from == "sama")
+        {
+            //jika function ini dipanggil dari pelepasan bidak di tempat yang sama 
+
+            //jika ditumpuk lagi kita set parent dari bidak sebelumnya yang dilepas ke bidak yang akan dilepas
+            if (bidakyangdilepas != null)
+            {
+                bidakyangdilepas.parent = currroot;
+                currroot.children = bidakyangdilepas;
+            }
+        }
+        else
+        {
+            //jika function ini dipanggil dari pelepasan bidak dengan menggeser
+            foreach(var ambil in bidakplayer)
+            {
+                //diber if ambil.namabidak != selectedbidak karena selected bidak sudah kegeser jadi kalo tidak diberi ini akan keselect yang selected bidak
+                if (ambil.lokasipapan == selectedpapan && ambil.parent == null && ambil.namabidak != selectedbidak)
+                {
+                    currroot.children = ambil;
+                    //ambil paling atas terus parentnya diganti dengan bidak yang ingin dilepas
+                    ambil.parent = currroot;
+                    break;
+                }
+            }
+        }
+        childcount--;
+        bidakyangdilepas = currroot;
+        //melepas parent dari children yang dilepas
+        bidakyangdilepas.parent.children = null;
+        bidakyangdilepas.parent = null;
+    }
+    public float taruhbidak()
+    {
+        if (get_namapapan_dari_bidak(selectedbidak) == "")
+        {
+            //untuk menaruh bidak baru ke papan
+
+            //cek apakah tempat yang ingin ditaruh valid
+            int bisa = 0;
+            for (int i = 0; i < possiblepapan.Count; i++)
+            {
+                if (possiblepapan[i] == selectedpapan)
+                {
+                    bisa = 1;
+                    break;
+                }
+            }
+            if (bisa == 1)
+            {
+                Bidak bidakchildren = null;
+                //mencari dulu bidak yang sudah ada di papan tersebut (dicari yang paling atas/ variabel parent pada bidak null)
+                for (int i = 0; i < bidakplayer.Count; i++)
+                {
+                    if (bidakplayer[i].lokasipapan.Equals(selectedpapan))
+                    {
+                        if (bidakplayer[i].parent == null)
+                        {
+                            bidakchildren = bidakplayer[i];
+                            break;
+                        }
+                    }
+                }
+                for (int i = 0; i < bidakplayer.Count; i++)
+                {
+                    if (bidakplayer[i].namabidak.Contains(selectedbidak))
+                    {
+                        //pengecekan bisa ditaruh pake possiblepapan
+                        if (bidakchildren != null)
+                        {
+                            //untuk proses menumpuk bidak
+                            bidakplayer[i].children = bidakchildren;
+                            bidakplayer[i].penomoran = updatepenomoranbidak;
+                            bidakplayer[i].lokasipapan = selectedpapan;
+                            bidakchildren.parent = bidakplayer[i];
+                            int counterchild = 0;
+                            var bidaksekarang = bidakplayer[i];
+                            float posisi = 0;
+                            while (bidaksekarang.children != null)
+                            {
+                                counterchild++;
+                                bidaksekarang = bidaksekarang.children;
+                            }
+
+                            posisi = (counterchild * 0.5f) + 1.5f;
+                            return posisi;
+                        }
+                        else if (bidakchildren == null)
+                        {
+                            //untuk proses menaruh bidak tanpa menumpuk
+                            bidakplayer[i].penomoran = updatepenomoranbidak;
+                            bidakplayer[i].lokasipapan = selectedpapan;
+                            return 1.5f;
+                        }
+                        break;
+                    }
+                }
+            }
+            /*jika -1 gagal taruh bidak*/
+            return -1;
+        }
+        else
+        {
+            Bidak objselectedbidak = null;
+            foreach (var bidak in bidakplayer)
+            {
+                if (bidak.namabidak == selectedbidak)
+                {
+                    objselectedbidak = bidak;
+                    break;
+                }
+            }
+            if (selectedpapan == objselectedbidak.lokasipapan)
+            {
+                if (childcount == 0)
+                {
+                    //untuk menaruh bidak yang paling atas
+                    for (int i = 0; i < bidakplayer.Count; i++)
+                    {
+                        if (bidakplayer[i].namabidak == selectedbidak)
+                        {
+                            //mengambalikan children sebelumnya
+                            bidakplayer[i].children = childrenselectedbidak;
+                            if (bidakplayer[i].children != null)
+                            {
+                                bidakplayer[i].children.parent = bidakplayer[i];
+                            }
+                            break;
+                        }
+                    }
+                    return -101;
+                }
+                else
+                {
+                    lepas_children_akhir_bidak("sama");
+                    return -100;
+                }
+            }
+            else
+            {
+                //cek apakah tempat yang ingin ditaruh valid
+                int bisa = 0;
+                for (int i = 0; i < possiblepapan.Count; i++)
+                {
+                    if (possiblepapan[i] == selectedpapan)
+                    {
+                        bisa = 1;
+                        break;
+                    }
+                }
+                if (bisa == 1)
+                {
+                    if (pilih_jalan_geser_bidak == "")
+                    {
+                        //awal geser bidak, jadi belum menentukan posisi yang diambil (kanan/kiri/atas/bawah)
+                        int posisitujuan = int.Parse((selectedpapan.Split("_"))[1]);
+                        int posisiawal = int.Parse((posisi_papan_awal.Split("_"))[1]);
+                        if (posisitujuan > posisiawal)
+                        {
+                            pilih_jalan_geser_bidak = "kanan";
+                        }
+                        else if (posisitujuan < posisiawal)
+                        {
+                            pilih_jalan_geser_bidak = "kiri";
+                        }
+                        else if (posisiawal == posisitujuan)
+                        {
+                            posisitujuan = int.Parse(((selectedpapan.Split("_"))[0]).Replace("papan", ""));
+                            posisiawal = int.Parse(((posisi_papan_awal.Split("_"))[0]).Replace("papan", ""));
+                            if (posisitujuan > posisiawal)
+                            {
+                                pilih_jalan_geser_bidak = "bawah";
+                            }
+                            else if (posisitujuan < posisiawal)
+                            {
+                                pilih_jalan_geser_bidak = "atas";
+                            }
+                        }
+                    }
+                    foreach (var x in bidakplayer)
+                    {
+                        if (x.namabidak == selectedbidak)
+                        {
+                            //mengganti posisi papan dari bidak yang digeser
+                            x.lokasipapan = selectedpapan;
+                            break;
+                        }
+                    }
+                    if(childcount != 0)
+                    {
+                        var currbidak = childrenselectedbidak;
+                        while (currbidak != null)
+                        {
+                            currbidak.lokasipapan = selectedpapan;
+                            currbidak = currbidak.children;
+                        }
+                    }
+                    posisi_papan_awal = selectedpapan;
+                    return -200;
+                }
+                return -1;
+            }
+        }
+    }
+    public bool possibe_bidak_aman(string namapapan)
+    {
+        bool hasil = true;
+        // dicek apakah di tempat itu ada capstone / wall
+        foreach (var x in bidakplayer)
+        {
+            if (x.lokasipapan == selectedpapan && x.parent == null)
+            {
+                if (x.iscapstone == true || x.penomoran == 2)
+                {
+                    hasil = false;
+                }
+                break;
+            }
+        }
+        return hasil;
     }
     public string get_namapapan_dari_bidak(string namabidak)
     {
@@ -148,11 +467,27 @@ public class data : MonoBehaviour
     }
     public void setchildselectbidak()
     {
+        childrenselectedbidak = null;
         for(int i = 0;i < bidakplayer.Count; i++)
         {
             if (bidakplayer[i].namabidak == selectedbidak)
             {
                 childrenselectedbidak = bidakplayer[i].children;
+                break;
+            }
+        }
+        if(childrenselectedbidak == null)
+        {
+            childcount = 0;
+        }
+        else
+        {
+            childcount = 0;
+            var tmproot = childrenselectedbidak;
+            while(tmproot != null)
+            {
+                childcount++;
+                tmproot = tmproot.children;
             }
         }
     }
