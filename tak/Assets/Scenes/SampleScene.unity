@@ -2700,6 +2700,51 @@ MonoBehaviour:
   listbidak: {fileID: 668398543}
   datagame: {fileID: 1538256719}
   parentpapan: {fileID: 590440878}
+--- !u!1 &1024898317
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1024898319}
+  - component: {fileID: 1024898318}
+  m_Layer: 0
+  m_Name: 'peripheral '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1024898318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024898317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e0eb712a6e819140a3f7cc49067dada, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  datagame: {fileID: 1538256719}
+--- !u!4 &1024898319
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024898317}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.7999306, y: 3.1064115, z: -0.70841587}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1101888920
 GameObject:
   m_ObjectHideFlags: 0
@@ -3771,10 +3816,12 @@ MonoBehaviour:
   pilih_jalan_geser_bidak: 
   childcount: 0
   posisi_papan_awal: 
+  posisi_paling_awal_papan: 
   possiblepapan: []
   updatepenomoranbidak: 0
   selectedpapan: 
   currentplayer: 1
+  countergame: 1
 --- !u!4 &1538256720
 Transform:
   m_ObjectHideFlags: 0
@@ -5189,3 +5236,4 @@ SceneRoots:
   - {fileID: 668398544}
   - {fileID: 590440879}
   - {fileID: 147497592151646108}
+  - {fileID: 1024898319}

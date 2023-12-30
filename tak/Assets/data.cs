@@ -31,12 +31,12 @@ public class data : MonoBehaviour
     //buat ngecek kemenangan pake papan ini
     public int[,] papan_cek =
     {
-        {0,0,0,0,0,0},
-        {0,0,0,0,0,0},
-        {0,0,0,0,0,0},
-        {0,0,0,0,0,0},
-        {0,0,0,0,0,0},
-        {0,0,0,0,0,0},
+        {-1,-1,-1,-1,-1,-1},
+        {-1,-1,-1,-1,-1,-1},
+        {-1,-1,-1,-1,-1,-1},
+        {-1,-1,-1,-1,-1,-1},
+        {-1,-1,-1,-1,-1,-1},
+        {-1,-1,-1,-1,-1,-1},
     };
     //buat papan permaianannya, dibuat menjadi 1 deret jadi tidak 2 dimensi, misal y=1 x=0 jadi index ke 6
     public List<Bidak> papan_game = new List<Bidak>();
