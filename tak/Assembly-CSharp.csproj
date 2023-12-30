@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\cekgame.cs" />
+    <Compile Include="Assets\aigame.cs" />
     <Compile Include="Assets\generate_bidak.cs" />
     <Compile Include="Assets\milihpapan.cs" />
     <Compile Include="Assets\putarkamera.cs" />

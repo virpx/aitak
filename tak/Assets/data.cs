@@ -141,21 +141,6 @@ public class data : MonoBehaviour
                 counter++;
             }
         }
-        int rows = papan_cek.GetLength(0);
-        int columns = papan_cek.GetLength(1);
-
-        Debug.Log("Logging 2D Array:");
-
-        for (int i = 0; i < rows; i++)
-        {
-            string rowString = "";
-            for (int j = 0; j < columns; j++)
-            {
-                rowString += papan_cek[i, j] + " ";
-            }
-            Debug.Log(rowString);
-        }
-
     }
     // Update is called once per frame
     void Update()

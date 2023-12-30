@@ -14,7 +14,14 @@ public class cekgame : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(cekmenang());
+        var hasil = cekmenang();
+        if(hasil == 1)
+        {
+            Debug.Log("White Win");
+        }else if(hasil == 2)
+        {
+            Debug.Log("Black Win");
+        }
     }
     private int recur_jalan_cek_menang_hitam_kesamping(int y,int x, List<int[]> history_kunjungan)
     {
