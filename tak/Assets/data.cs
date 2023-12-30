@@ -52,6 +52,8 @@ public class data : MonoBehaviour
     public Bidak bidakyangdilepas = null;
     public int childcount = 0;
     public string posisi_papan_awal = "";
+    //untuk menlihat apakah return -101 tidak merubah posisi bidak
+    public string posisi_paling_awal_papan = "";
     /*diisi bersamaan dengan pengecekan highlight papan di milihpapan.cs*/
     public List<string> possiblepapan = null;
     /*=========================================*/
@@ -83,7 +85,78 @@ public class data : MonoBehaviour
         }
         bidakplayer.Add(new Bidak(true, "black_31",1));
     }
+    public void updatepapan()
+    {
+        int counter = 0;
+        for(int y= 0; y <6;y++)
+        {
+            for(int x= 0; x < 6; x++)
+            {
+                Bidak cek = null; 
+                foreach(var xs in bidakplayer)
+                {
+                    if(xs.lokasipapan == "papan" + (y+1) + "_" + (x+1))
+                    {
+                        cek = xs;
+                        break;
+                    }
+                }
+                if(cek != null)
+                {
+                    while(cek.parent != null)
+                    {
+                        cek = cek.parent;
+                    }
+                }
+                int datapapancek = -1;
+                if(cek != null )
+                {
+                    if (cek.namabidak.Contains("white"))
+                    {
+                        datapapancek = 0;
+                        if(cek.penomoran == 2)
+                        {
+                            datapapancek = 1;
+                        }
+                        if(cek.iscapstone == true)
+                        {
+                            datapapancek = 2;
+                        }
+                    }
+                    else
+                    {
+                        datapapancek = 3;
+                        if (cek.penomoran == 2)
+                        {
+                            datapapancek = 4;
+                        }
+                        if (cek.iscapstone == true)
+                        {
+                            datapapancek = 5;
+                        }
+                    }
+                }
+                papan_cek[y,x] = datapapancek;
+                papan_game[counter] = cek;
+                counter++;
+            }
+        }
+        int rows = papan_cek.GetLength(0);
+        int columns = papan_cek.GetLength(1);
 
+        Debug.Log("Logging 2D Array:");
+
+        for (int i = 0; i < rows; i++)
+        {
+            string rowString = "";
+            for (int j = 0; j < columns; j++)
+            {
+                rowString += papan_cek[i, j] + " ";
+            }
+            Debug.Log(rowString);
+        }
+
+    }
     // Update is called once per frame
     void Update()
     {

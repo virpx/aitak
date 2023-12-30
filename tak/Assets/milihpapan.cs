@@ -59,6 +59,7 @@ public class milihpapan : MonoBehaviour
                         {
                             datagame.currentplayer *= -1;
                         }
+                        datagame.updatepapan();
                         datagame.resetdata();
                     }
                     break;
@@ -127,7 +128,11 @@ public class milihpapan : MonoBehaviour
                         }
                         gameobjbidak.transform.position = posisibaru;
                     }
-                    datagame.currentplayer *= -1;
+                    if(datagame.posisi_paling_awal_papan != datagame.selectedpapan)
+                    {
+                        datagame.currentplayer *= -1;
+                    }
+                    datagame.updatepapan();
                     datagame.resetdata();
                 }
                 void geser_bidak_ke_papan_baru(string namabidak)
@@ -228,6 +233,7 @@ public class milihpapan : MonoBehaviour
                             gameobjbidak.transform.position = posisibaru;
                         }
                         datagame.currentplayer *= -1;
+                        datagame.updatepapan();
                         datagame.resetdata();
                     }
                 }

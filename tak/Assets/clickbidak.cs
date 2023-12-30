@@ -372,6 +372,7 @@ public class clickbidak : MonoBehaviour
                                     datagame.setchildselectbidak();
                                     //berarti click bidak yang ada di papan
                                     datagame.posisi_papan_awal = datagame.get_namapapan_dari_bidak(datagame.selectedbidak);
+                                    datagame.posisi_paling_awal_papan = datagame.get_namapapan_dari_bidak(datagame.selectedbidak);
                                     //untuk menaikkan (select) bidakpalingatas
                                     var posisibidak = hit.transform.position;
                                     posisibidak[1] += 1;
