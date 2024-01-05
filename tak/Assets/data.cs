@@ -60,6 +60,7 @@ public class data : MonoBehaviour
 
     //jika pada game merubah ke wall maka dimasukkan ke sini, inisialisasi awal semuanya capstone biasa (bukan wall)
     public int updatepenomoranbidak;
+    public int aiberpikir = 0;
     public string selectedpapan;
     //currentplayer : 1 = white , -1 = black
     public int currentplayer = 1;
