@@ -61,9 +61,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\cekgame.cs" />
-    <Compile Include="Assets\aigame.cs" />
     <Compile Include="Assets\generate_bidak.cs" />
     <Compile Include="Assets\milihpapan.cs" />
+    <Compile Include="Assets\cobaae.cs" />
+    <Compile Include="Assets\bck_aigame.cs" />
+    <Compile Include="Assets\bck_cekgame.cs" />
+    <Compile Include="Assets\ai.cs" />
     <Compile Include="Assets\putarkamera.cs" />
     <Compile Include="Assets\data.cs" />
     <Compile Include="Assets\clickbidak.cs" />

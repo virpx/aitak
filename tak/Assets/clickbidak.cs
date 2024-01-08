@@ -27,19 +27,19 @@ public class clickbidak : MonoBehaviour
             //untuk memberikan highlight pada papan ketika sudah memilih bidak
             if (datagame.selectedbidak != "")
             {
-                if(datagame.childrenselectedbidak == null && datagame.get_namapapan_dari_bidak(datagame.selectedbidak) == "")
+                if (datagame.childrenselectedbidak == null && datagame.get_namapapan_dari_bidak(datagame.selectedbidak) == "")
                 {
                     //mencari papan yang bisa ditaruh (yang belum ada bidaknya)
                     List<string> possiblepapan = new List<string>();
-                    for(int y = 1; y <= 6; y++)
+                    for (int y = 1; y <= 6; y++)
                     {
                         for (int x = 1; x <= 6; x++)
                         {
                             int jos = 1;
-                            var namapapan = "papan"+y+"_"+x;
-                            foreach(var cek in datagame.bidakplayer)
+                            var namapapan = "papan" + y + "_" + x;
+                            foreach (var cek in datagame.bidakplayer)
                             {
-                                if(cek.lokasipapan == namapapan)
+                                if (cek.lokasipapan == namapapan)
                                 {
                                     jos = 0;
                                     break;
@@ -75,7 +75,7 @@ public class clickbidak : MonoBehaviour
                             break;
                         }
                     }
-                    if(bisa == 1)
+                    if (bisa == 1)
                     {
                         for (int i = 0; i < parentpapan.transform.childCount; i++)
                         {
@@ -95,7 +95,7 @@ public class clickbidak : MonoBehaviour
                 {
                     //jika yang dipilih yang di papan
                     List<string> possiblepapan = new List<string>();
-                    if(datagame.pilih_jalan_geser_bidak == "")
+                    if (datagame.pilih_jalan_geser_bidak == "")
                     {
                         //jika awal geser maka yang bisa adalah kanan kiri atas bawah
                         var papansekarang = datagame.get_namapapan_dari_bidak(datagame.selectedbidak);
@@ -153,7 +153,8 @@ public class clickbidak : MonoBehaviour
                                     possiblepapan.Add(namapapantmp);
                                 }
                             }
-                        } else if (datagame.pilih_jalan_geser_bidak == "kiri")
+                        }
+                        else if (datagame.pilih_jalan_geser_bidak == "kiri")
                         {
                             int kolompapan = int.Parse(papansekarang.Split("_")[1]);
                             if (kolompapan - 1 >= 1)
@@ -190,7 +191,7 @@ public class clickbidak : MonoBehaviour
                             }
                         }
                     }
-                    
+
                     datagame.possiblepapan = possiblepapan;
                     int bisa = 0;
                     string papankenahover = "";
@@ -215,7 +216,7 @@ public class clickbidak : MonoBehaviour
                             break;
                         }
                     }
-                    if(bisa == 1)
+                    if (bisa == 1)
                     {
                         for (int i = 0; i < parentpapan.transform.childCount; i++)
                         {
@@ -235,7 +236,7 @@ public class clickbidak : MonoBehaviour
             }
             if (Input.GetMouseButtonUp(0))
             {
-                if(datagame.countergame == 1)
+                if (datagame.countergame == 1)
                 {
                     //untuk hitam jalan dulu, tidak boleh rotate
                     if (hit.transform.name.Contains("black_") && hit.transform.name != "black_31")
@@ -250,7 +251,7 @@ public class clickbidak : MonoBehaviour
                         }
                         else
                         {
-                            if(hit.transform.name != datagame.selectedbidak)
+                            if (hit.transform.name != datagame.selectedbidak)
                             {
                                 if (datagame.get_namapapan_dari_bidak(hit.transform.name) == "")
                                 {
@@ -276,7 +277,8 @@ public class clickbidak : MonoBehaviour
                         }
                     }
                     //tidak diberikan deteksi klik di bidak untuk menaruh karena pasti taruh di papan yang kosong (belum ada bidaknya)
-                }else if(datagame.countergame == 2)
+                }
+                else if (datagame.countergame == 2)
                 {
                     //untuk hitam jalan dulu, tidak boleh rotate
                     if (hit.transform.name.Contains("white_") && hit.transform.name != "white_31")
@@ -330,7 +332,7 @@ public class clickbidak : MonoBehaviour
                             {
                                 int jalan = 0;
                                 //pengecekan giliran
-                                if(datagame.currentplayer == 1 && hit.transform.name.Contains("white"))
+                                if (datagame.currentplayer == 1 && hit.transform.name.Contains("white"))
                                 {
                                     jalan = 1;
                                 }

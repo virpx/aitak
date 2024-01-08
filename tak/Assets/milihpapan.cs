@@ -51,6 +51,8 @@ public class milihpapan : MonoBehaviour
                         var posisibidak = bidaknya.transform.position;
                         posisibidak[1] -= 1;
                         bidaknya.transform.position = posisibidak;
+                        datagame.updatepapan();
+                        datagame.resetdata();
                         if(datagame.countergame < 3)
                         {
                             datagame.countergame++;
@@ -59,8 +61,6 @@ public class milihpapan : MonoBehaviour
                         {
                             datagame.currentplayer *= -1;
                         }
-                        datagame.updatepapan();
-                        datagame.resetdata();
                     }
                     break;
                 }
@@ -107,7 +107,7 @@ public class milihpapan : MonoBehaviour
                 }
                 if (hasiltaruh == -101)
                 {
-                    //jika return -101 maka hanya taruh bidak (di tempat yang sama(untuk paling atas), jadi tidak perlu script banyak")
+                    //jika return -101 maka hanya taruh bidak (di tempat yang sama (untuk paling atas tapi bukan berarti dari awal di tempat itu terus bisa saja geser ke papan baru terus di taruh di papan baru itu ), jadi tidak perlu script banyak")
                     var listbidak = datagame.get_list_bidak_papan();
                     foreach (var item in listbidak)
                     {
@@ -128,12 +128,12 @@ public class milihpapan : MonoBehaviour
                         }
                         gameobjbidak.transform.position = posisibaru;
                     }
+                    datagame.updatepapan();
+                    datagame.resetdata();
                     if(datagame.posisi_paling_awal_papan != datagame.selectedpapan)
                     {
                         datagame.currentplayer *= -1;
                     }
-                    datagame.updatepapan();
-                    datagame.resetdata();
                 }
                 void geser_bidak_ke_papan_baru(string namabidak)
                 {
@@ -232,9 +232,9 @@ public class milihpapan : MonoBehaviour
                             }
                             gameobjbidak.transform.position = posisibaru;
                         }
-                        datagame.currentplayer *= -1;
                         datagame.updatepapan();
                         datagame.resetdata();
+                        datagame.currentplayer *= -1;
                     }
                 }
             }

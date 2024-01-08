@@ -6,9 +6,13 @@ using System.Linq;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 using static data;
+using static Unity.VisualScripting.Metadata;
+using static UnityEditor.Progress;
 
 public class data : MonoBehaviour
 {
+    public GameObject listbidak;
+    public GameObject listpapane;
     public class Bidak
     {
         public bool iscapstone;
@@ -20,11 +24,11 @@ public class data : MonoBehaviour
         //2 = WALL/BIDAK BERDIRI
         public int penomoran;
         public string namabidak;
-        public Bidak(bool iscapstone, string nama,int penomoran)
+        public Bidak(bool iscapstone, string nama, int penomoran)
         {
             this.iscapstone = iscapstone;
             this.namabidak = nama;
-            this.penomoran = penomoran; 
+            this.penomoran = penomoran;
         }
 
     }
@@ -69,57 +73,162 @@ public class data : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        for(int i = 0; i < 36; i++)
+        for (int i = 0; i < 36; i++)
         {
             papan_game.Add(null);
         }
         //generate player putih
-        for(int i = 0; i < 30; i++)
+        for (int i = 0; i < 30; i++)
         {
-            bidakplayer.Add(new Bidak(false, "white_" + (i+1),1));
+            bidakplayer.Add(new Bidak(false, "white_" + (i + 1), 1));
         }
         bidakplayer.Add(new Bidak(true, "white_31", 1));
         //generate player hitam
         for (int i = 0; i < 30; i++)
         {
-            bidakplayer.Add(new Bidak(false, "black_" + (i + 1),1));
+            bidakplayer.Add(new Bidak(false, "black_" + (i + 1), 1));
         }
-        bidakplayer.Add(new Bidak(true, "black_31",1));
+        bidakplayer.Add(new Bidak(true, "black_31", 1));
+    }
+    private Bidak clonebidak_ai(ai.Bidak curr)
+    {
+        var sebelumnya = new Bidak(false, "", 1);
+        sebelumnya.iscapstone = curr.iscapstone;
+        sebelumnya.lokasipapan = curr.lokasipapan;
+        sebelumnya.penomoran = curr.penomoran;
+        sebelumnya.namabidak = curr.namabidak;
+        Bidak hasil = sebelumnya;
+        curr = curr.children;
+        while (curr != null)
+        {
+            var childe = new Bidak(false, "", 1);
+            childe.iscapstone = curr.iscapstone;
+            childe.lokasipapan = curr.lokasipapan;
+            childe.penomoran = curr.penomoran;
+            childe.namabidak = curr.namabidak;
+            childe.parent = sebelumnya;
+            sebelumnya.children = childe;
+            sebelumnya = childe;
+            curr = curr.children;
+        }
+        return sebelumnya;
+    }
+    public void dispatchai(List<ai.Bidak> papanhasilai)
+    {
+        int counter = 0;
+        for (int y = 0; y < 6; y++)
+        {
+            for (int x = 0; x < 6; x++)
+            {
+                var xx = papanhasilai[counter];
+                if (xx != null)
+                {
+                    Bidak palingatas = null;
+                    for (int i = 0; i < bidakplayer.Count; i++)
+                    {
+                        //mencari bidaknya di bidak player
+                        if (xx.namabidak == bidakplayer[i].namabidak)
+                        {
+                            palingatas = bidakplayer[i];
+                            break;
+                        }
+                    }
+                    palingatas.parent = null;
+                    palingatas.lokasipapan = "papan" + (y + 1) + "_" + (x + 1);
+                    recuranakbaru(xx.children, palingatas, "papan" + (y + 1) + "_" + (x + 1));
+                    var telusuri = palingatas;
+                    while (telusuri != null)
+                    {
+                        GameObject gameobjbidak = null;
+                        GameObject papanpilih = null;
+                        foreach (Transform item22 in listpapane.transform)
+                        {
+                            if (item22.name == telusuri.lokasipapan)
+                            {
+                                papanpilih = item22.gameObject;
+                                break;
+                            }
+                        }
+                        foreach (Transform item2 in listbidak.transform)
+                        {
+                            if (item2.name == telusuri.namabidak)
+                            {
+                                gameobjbidak = item2.gameObject;
+                                break;
+                            }
+                        }
+                        if (telusuri.iscapstone)
+                        {
+                            gameobjbidak.transform.eulerAngles = new Vector3(0, 90, -90);
+                        }
+                        Vector3 posisibaru = papanpilih.transform.position;
+                        posisibaru[1] += (setting_ulang_posisi_bidak(telusuri.namabidak) - 1);
+                        if (telusuri.namabidak.Contains("black_") && !(telusuri.namabidak.Equals("black_31")))
+                        {
+                            posisibaru[0] += 0.7f;
+                        }
+                        gameobjbidak.transform.position = posisibaru;
+                        telusuri = telusuri.children;
+                    }
+                }
+                counter++;
+            }
+        }
+    }
+    public void recuranakbaru(ai.Bidak bidakchildrenai, Bidak bidakdata, string namapapanbaru)
+    {
+        if (bidakchildrenai != null)
+        {
+            Bidak cari = null;
+            foreach (var y in bidakplayer)
+            {
+                //mencari bidaknya di bidak player
+                if (bidakchildrenai.namabidak == y.namabidak)
+                {
+                    cari = y;
+                    break;
+                }
+            }
+            cari.parent = bidakdata;
+            cari.lokasipapan = namapapanbaru;
+            bidakdata.children = cari;
+            recuranakbaru(bidakchildrenai.children, bidakdata.children, namapapanbaru);
+        }
     }
     public void updatepapan()
     {
         int counter = 0;
-        for(int y= 0; y <6;y++)
+        for (int y = 0; y < 6; y++)
         {
-            for(int x= 0; x < 6; x++)
+            for (int x = 0; x < 6; x++)
             {
-                Bidak cek = null; 
-                foreach(var xs in bidakplayer)
+                Bidak cek = null;
+                foreach (var xs in bidakplayer)
                 {
-                    if(xs.lokasipapan == "papan" + (y+1) + "_" + (x+1))
+                    if (xs.lokasipapan == "papan" + (y + 1) + "_" + (x + 1))
                     {
                         cek = xs;
                         break;
                     }
                 }
-                if(cek != null)
+                if (cek != null)
                 {
-                    while(cek.parent != null)
+                    while (cek.parent != null)
                     {
                         cek = cek.parent;
                     }
                 }
                 int datapapancek = -1;
-                if(cek != null )
+                if (cek != null)
                 {
                     if (cek.namabidak.Contains("white"))
                     {
                         datapapancek = 0;
-                        if(cek.penomoran == 2)
+                        if (cek.penomoran == 2)
                         {
                             datapapancek = 1;
                         }
-                        if(cek.iscapstone == true)
+                        if (cek.iscapstone == true)
                         {
                             datapapancek = 2;
                         }
@@ -137,7 +246,7 @@ public class data : MonoBehaviour
                         }
                     }
                 }
-                papan_cek[y,x] = datapapancek;
+                papan_cek[y, x] = datapapancek;
                 papan_game[counter] = cek;
                 counter++;
             }
@@ -146,21 +255,21 @@ public class data : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
     public string get_bidak_atas(string bidakcari)
     {
         var nama = "";
         Bidak currbidak = null;
-        foreach(var bidak in bidakplayer)
+        foreach (var bidak in bidakplayer)
         {
-            if(bidak.namabidak == bidakcari)
+            if (bidak.namabidak == bidakcari)
             {
                 currbidak = bidak;
                 break;
             }
         }
-        while(currbidak.parent != null)
+        while (currbidak.parent != null)
         {
             currbidak = currbidak.parent;
         }
@@ -182,10 +291,10 @@ public class data : MonoBehaviour
     public List<Bidak> get_list_bidak_papan(string req = "")
     {
         List<Bidak> list = new List<Bidak>();
-        if(req == "spesial")
+        if (req == "spesial")
         {
             List<string> lbidakskip = new List<string>();
-            if(childcount != 0)
+            if (childcount != 0)
             {
                 //jika childcount nya sudah 0 maka yang di childrenselectedbidak tidak berlaku maka tidak perlu di masukkan ke skip
                 var currroot = childrenselectedbidak;
@@ -203,15 +312,15 @@ public class data : MonoBehaviour
                 if (x.lokasipapan == selectedpapan)
                 {
                     int masuk = 1;
-                    foreach(var cek in lbidakskip)
+                    foreach (var cek in lbidakskip)
                     {
-                        if(x.namabidak == cek)
+                        if (x.namabidak == cek)
                         {
                             masuk = 0;
                             break;
                         }
                     }
-                    if(masuk == 1)
+                    if (masuk == 1)
                     {
                         list.Add(x);
                     }
@@ -235,10 +344,10 @@ public class data : MonoBehaviour
         float hasil = 0f;
         foreach (var x in bidakplayer)
         {
-            if(x.namabidak == namabidake)
+            if (x.namabidak == namabidake)
             {
                 var childrene = x.children;
-                if(childrene == null)
+                if (childrene == null)
                 {
                     //children paling bawah seperti menaruh di papan tanpa tumpuk
                     hasil = 1.5f;
@@ -249,7 +358,7 @@ public class data : MonoBehaviour
                     while (childrene != null)
                     {
                         jumlahchilde++;
-                        childrene = childrene.children; 
+                        childrene = childrene.children;
                     }
                     hasil = (jumlahchilde * 0.5f) + 1.5f;
                 }
@@ -263,9 +372,9 @@ public class data : MonoBehaviour
         //function ini berguna untuk mensetting parent dari bidak yang ada di papan yang dipilih, hanya umtuk bidak yang sedang dipilih
         //(karena untuk setiap childrennya sudah di setting di lepas_children_akhir_bidak tidak dibuat satu karena bentrok dengan kode di milihpapan)
         Bidak bidakselected = null;
-        foreach(var x in bidakplayer)
+        foreach (var x in bidakplayer)
         {
-            if(x.namabidak == selectedbidak)
+            if (x.namabidak == selectedbidak)
             {
                 bidakselected = x;
                 break;
@@ -291,7 +400,7 @@ public class data : MonoBehaviour
             /*untuk mengambil children paling akhir*/
             currroot = currroot.children;
         };
-        if(from == "sama")
+        if (from == "sama")
         {
             //jika function ini dipanggil dari pelepasan bidak di tempat yang sama 
 
@@ -305,7 +414,7 @@ public class data : MonoBehaviour
         else
         {
             //jika function ini dipanggil dari pelepasan bidak dengan menggeser
-            foreach(var ambil in bidakplayer)
+            foreach (var ambil in bidakplayer)
             {
                 //diber if ambil.namabidak != selectedbidak karena selected bidak sudah kegeser jadi kalo tidak diberi ini akan keselect yang selected bidak
                 if (ambil.lokasipapan == selectedpapan && ambil.parent == null && ambil.namabidak != selectedbidak)
@@ -479,7 +588,7 @@ public class data : MonoBehaviour
                             break;
                         }
                     }
-                    if(childcount != 0)
+                    if (childcount != 0)
                     {
                         var currbidak = childrenselectedbidak;
                         while (currbidak != null)
@@ -517,7 +626,7 @@ public class data : MonoBehaviour
         string hasil = null;
         for (int i = 0; i < bidakplayer.Count; i++)
         {
-            if (bidakplayer[i].namabidak.Contains(namabidak))
+            if (bidakplayer[i].namabidak == namabidak)
             {
                 hasil = bidakplayer[i].lokasipapan;
             }
@@ -527,7 +636,7 @@ public class data : MonoBehaviour
     public void setchildselectbidak()
     {
         childrenselectedbidak = null;
-        for(int i = 0;i < bidakplayer.Count; i++)
+        for (int i = 0; i < bidakplayer.Count; i++)
         {
             if (bidakplayer[i].namabidak == selectedbidak)
             {
@@ -535,7 +644,7 @@ public class data : MonoBehaviour
                 break;
             }
         }
-        if(childrenselectedbidak == null)
+        if (childrenselectedbidak == null)
         {
             childcount = 0;
         }
@@ -543,7 +652,7 @@ public class data : MonoBehaviour
         {
             childcount = 0;
             var tmproot = childrenselectedbidak;
-            while(tmproot != null)
+            while (tmproot != null)
             {
                 childcount++;
                 tmproot = tmproot.children;
