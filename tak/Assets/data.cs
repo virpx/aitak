@@ -121,6 +121,7 @@ public class data : MonoBehaviour
             for (int x = 0; x < 6; x++)
             {
                 var xx = papanhasilai[counter];
+                //Debug.Log(xx);
                 if (xx != null)
                 {
                     Bidak palingatas = null;
@@ -129,6 +130,7 @@ public class data : MonoBehaviour
                         //mencari bidaknya di bidak player
                         if (xx.namabidak == bidakplayer[i].namabidak)
                         {
+                            bidakplayer[i].penomoran = xx.penomoran;
                             palingatas = bidakplayer[i];
                             break;
                         }
@@ -157,7 +159,7 @@ public class data : MonoBehaviour
                                 break;
                             }
                         }
-                        if (telusuri.iscapstone)
+                        if (telusuri.iscapstone == false && telusuri.penomoran == 2)
                         {
                             gameobjbidak.transform.eulerAngles = new Vector3(0, 90, -90);
                         }

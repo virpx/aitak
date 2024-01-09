@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class cobaae : MonoBehaviour
 {
+    public string action;
     public data datagame;
     public ai aigame;
     // Start is called before the first frame update
@@ -19,30 +20,45 @@ public class cobaae : MonoBehaviour
     }
     private void OnMouseDown()
     {
-        Debug.Log(aigame.rootminimax.indexchildpilih);
-        aigame.cetak(aigame.rootminimax.curr.papan_cek);
-        aigame.cetak(aigame.rootminimax.children[aigame.rootminimax.indexchildpilih].curr.papan_cek);
-        // foreach(var x in aigame.rootminimax.children[0].children)
+        // aigame.cetak(aigame.rootminimax.children[0].curr.papan_cek);
+        // Debug.Log(aigame.terminlarecurmenang2(aigame.rootminimax.children[0].curr.papan_cek));
+        // if (action.Contains("awal"))
         // {
-        //     aigame.cetak(x.curr.papan_cek);
-        // }
-        // for (int i = 0; i < 36; i++)
-        // {
-        //     string namae = "";
-        //     if (aigame.rootminimax.children[0].children[0].curr.papan_game[i] != null)
+        //     for (int a = 0; a < 36; a++)
         //     {
-        //         namae = aigame.rootminimax.children[0].children[0].curr.papan_game[i].namabidak;
+        //         string namae = "";
+        //         if (datagame.papan_game[a] != null)
+        //         {
+        //             namae = datagame.papan_game[a].namabidak + " mode : " + datagame.papan_game[a].penomoran;
+        //         }
+        //         Debug.Log(a + ":" + namae);
         //     }
-        //     Debug.Log(i + ":" + namae);
         // }
-        // for (int i = 0; i < 36; i++)
+        // else
         // {
-        //     string namae = "";
-        //     if (aigame.rootminimax.curr.papan_game[i] != null)
+        //     Debug.Log(aigame.rootminimax.indexchildpilih);
+        //     aigame.cetak(aigame.rootminimax.curr.papan_cek);
+        //     foreach (var x in aigame.rootminimax.children)
         //     {
-        //         namae = aigame.rootminimax.curr.papan_game[i].namabidak;
+        //         aigame.cetak(x.curr.papan_cek);
         //     }
-        //     Debug.Log(i + ":" + namae);
         // }
+        // aigame.cetak(aigame.rootminimax.children[aigame.rootminimax.indexchildpilih].curr.papan_cek);
+        for (int i = 0; i < 36; i++)
+        {
+            string namae = "";
+            string childe = "";
+            if (datagame.papan_game[i] != null)
+            {
+                namae = datagame.papan_game[i].namabidak+" == "+datagame.papan_game[i].penomoran;
+                var telusuri = datagame.papan_game[i];
+                while (telusuri.children != null)
+                {
+                    childe += datagame.papan_game[i].children.namabidak+" == "+datagame.papan_game[i].children.penomoran + "," ;
+                    telusuri = telusuri.children;
+                }
+            }
+            Debug.Log(i + ":" + namae+" children e : "+childe);
+        }
     }
 }

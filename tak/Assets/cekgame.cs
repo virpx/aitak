@@ -8,20 +8,31 @@ public class cekgame : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        // int[,] papan_tmp =
+        //         {
+        //     {-1,-1,-1,-1,-1,-1},
+        //     {-1,-1,-1,-1,-1,-1},
+        //     {-1,-1,-1,-1,-1,-1},
+        //     {-1,-1,-1,-1,-1,-1},
+        //     {-1,-1,-1,0,2,0},
+        //     {0,0,0,0,4,0},
+        // };
+        // Debug.Log(cekmenang(papan_tmp));
     }
 
     // Update is called once per frame
     void Update()
     {
-        // var hasil = cekmenang(null);
-        // if(hasil == 1)
-        // {
-        //     Debug.Log("White Win");
-        // }else if(hasil == 2)
-        // {
-        //     Debug.Log("Black Win");
-        // }
+        var hasil = cekmenang(null);
+        if(hasil == 1)
+        {
+            Debug.Log("White Win");
+            datagame.currentplayer = -2;
+        }else if(hasil == 2)
+        {
+            Debug.Log("Black Win");
+            datagame.currentplayer = -2;
+        }
     }
     private int[,] clonepapancek(int[,] papan)
     {
@@ -140,7 +151,7 @@ public class cekgame : MonoBehaviour
                 //untuk putih
                 if (papan[0, x] >= 0 && papan[0, x] <= 2)
                 {
-                    if (recurbawah(papan, "white", x,0) > 0)
+                    if (recurbawah(papan, "white", x, 0) > 0)
                     {
                         return 1;
                     }
@@ -148,7 +159,7 @@ public class cekgame : MonoBehaviour
                 //untuk hitam
                 if (papan[0, x] >= 3 && papan[0, x] <= 5)
                 {
-                    if (recurbawah(papan, "black", x,0) > 0)
+                    if (recurbawah(papan, "black", x, 0) > 0)
                     {
                         return 2;
                     }

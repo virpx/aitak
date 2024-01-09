@@ -57,21 +57,32 @@ public class ai : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Bidak bidakbayangan = new Bidak(false,"bidak_bayangan",0);
-        // Bidak bidak1 = new Bidak(false,"white_1",0);
-        // Bidak bidak2 = new Bidak(true,"bidak2",0);
+        // Bidak bidakbayangan = new Bidak(false, "bidak_bayangan", 0);
+        // Bidak bidak1 = new Bidak(false, "white_1", 2);
+        // Bidak bidak2 = new Bidak(true, "bidak2", 0);
         // bidak1.parent = bidakbayangan;
         // bidakbayangan.children = bidak1;
         // List<Bidak> papan = new List<Bidak>();
-        // for(int i=0;i<36;i++){
+        // for (int i = 0; i < 36; i++)
+        // {
         //     papan.Add(null);
         // }
-        // papan[1] = bidak2;
         // generatekombinasigerakkanan(bidakbayangan, papan, 0);
         // Debug.Log(global_children_minimaxnode.Count);
-        // foreach(var x in global_children_minimaxnode){
+        // foreach (var x in global_children_minimaxnode)
+        // {
         //     cetak(x.papan_cek);
         // }
+        // int[,] papan_cek =
+        // {
+        //     {3,-1,-1,-1,-1,-1,},
+        //     {3,-1,-1,-1,-1,-1,},
+        //     {3,-1,-1,-1,-1,-1,},
+        //     {3,-1,-1,-1,-1,-1,},
+        //     {3,-1,-1,-1,-1,-1,},
+        //     {-1,-1,-1,-1,-1,-1,},
+        // };
+        // Debug.Log(terminlarecurmenang2(papan_cek));
     }
 
     // Update is called once per frame
@@ -117,11 +128,33 @@ public class ai : MonoBehaviour
                             indexprobsama.Add(i);
                         }
                     }
+                    // jika ada chance menaruh yang bukan wall maka yang chance wall akan dihapus
                     if (jumlahpilihan > 1)
                     {
-                        System.Random rnd = new System.Random();
-                        //random 
-                        rootminimax.indexchildpilih = indexprobsama[rnd.Next(indexprobsama.Count)];
+                        var indexterpilih = -1000;
+                        var min = 100000000;
+                        foreach (var yyx in indexprobsama)
+                        {
+                            //dibuat -1 karena biar kalau geser dari posisi semula masih 0 dan jika bukan yang dicari maka tidak masuk hitungan
+                            var hasile = terminlarecurmenang2(rootminimax.children[yyx].curr.papan_cek);
+                            if (hasile < min)
+                            {
+                                min = hasile;
+                                indexterpilih = yyx;
+                            }
+                        }
+                        // System.Random rnd = new System.Random();
+                        // rootminimax.indexchildpilih = indexprobsama[rnd.Next(indexprobsama.Count)];
+                        if (indexterpilih == -1000)
+                        {
+                            //random 
+                            System.Random rnd = new System.Random();
+                            rootminimax.indexchildpilih = indexprobsama[rnd.Next(indexprobsama.Count)];
+                        }
+                        else
+                        {
+                            rootminimax.indexchildpilih = indexterpilih;
+                        }
                     }
                     datagame.dispatchai(clonepapan(rootminimax.children[rootminimax.indexchildpilih].curr.papan_game));
                     datagame.updatepapan();
@@ -143,6 +176,187 @@ public class ai : MonoBehaviour
                 }
             }
         }
+    }
+    private int recur_get_jumlah_berdekatan(int[,] papancek, int x, int y, int counter)
+    {
+        if (x >= 0 && y >= 0 && x <= 5 && y <= 5)
+        {
+            if (papancek[y, x] == 3 || papancek[y, x] == 5)
+            {
+                var papanclone = clonepapancek(papancek);
+                papanclone[y, x] = -100;
+                int hasil = 0;
+                hasil += recur_get_jumlah_berdekatan(papanclone, (x + 1), y, (counter + 1));
+                hasil += recur_get_jumlah_berdekatan(papanclone, (x - 1), y, (counter + 1));
+                hasil += recur_get_jumlah_berdekatan(papanclone, x, (y + 1), (counter + 1));
+                hasil += recur_get_jumlah_berdekatan(papanclone, x, (y - 1), (counter + 1));
+                return hasil;
+            }
+            else
+            {
+                if (counter > 0 && papancek[y, x] != -100)
+                {
+                    //kalau di next" sudah pasti menuju yang tidak ada isinya tapi pembedanya ada di counter, ini bekas jalan atau tidak
+                    //jika bekas jalan maka 1 jadi ada berdekatan
+                    return 1;
+                }
+                else
+                {
+                    //jik tidak 0 karen awal sudah langsung 0
+                    return 0;
+                }
+            }
+        }
+        else
+        {
+            if (counter > 0)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
+    public int terminlarecurmenang2(int[,] papan)
+    {
+        int hasil = int.MaxValue;
+        var papane = clonepapancek(papan);
+        //ganti papan yang null dengan yang dicari
+        for (int y = 0; y < 6; y++)
+        {
+            for (int x = 0; x < 6; x++)
+            {
+                if (papane[y, x] == -1)
+                {
+                    papane[y, x] = 3;
+                }
+            }
+        }
+        for (int y = 0; y < 6; y++)
+        {
+            var jalan = true;
+            var x = 0;
+            while (jalan)
+            {
+                if (x > 5)
+                {
+                    jalan = false;
+                }
+                else
+                {
+                    if (papan[y, x] == 3 || papan[y, x] == 5)
+                    {
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, x, y, "black", "kiri", 0);
+                        if (historycounter.Count > 0)
+                        {
+                            if (hasil > historycounter.Min())
+                            {
+                                hasil = historycounter.Min();
+                            }
+                        }
+                        x++;
+                    }
+                    else
+                    {
+                        jalan = false;
+                    }
+                }
+            }
+            jalan = true;
+            x = 5;
+            while (jalan)
+            {
+                if (x < 0)
+                {
+                    jalan = false;
+                }
+                else
+                {
+                    if (papan[y, x] == 3 || papan[y, x] == 5)
+                    {
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, x, y, "black", "kanan", 0);
+                        if (historycounter.Count > 0)
+                        {
+                            if (hasil > historycounter.Min())
+                            {
+                                hasil = historycounter.Min();
+                            }
+                        }
+                        x--;
+                    }
+                    else
+                    {
+                        jalan = false;
+                    }
+                }
+            }
+        }
+        for (int x = 0; x < 6; x++)
+        {
+            var jalan = true;
+            var y = 0;
+            while (jalan)
+            {
+                if (y > 5)
+                {
+                    jalan = false;
+                }
+                else
+                {
+                    if (papan[y, x] == 3 || papan[y, x] == 5)
+                    {
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, x, y, "black", "atas", 0);
+                        if (historycounter.Count > 0)
+                        {
+                            if (hasil > historycounter.Min())
+                            {
+                                hasil = historycounter.Min();
+                            }
+                        }
+                        y++;
+                    }
+                    else
+                    {
+                        jalan = false;
+                    }
+                }
+            }
+            jalan = true;
+            y = 5;
+            while (jalan)
+            {
+                if (y < 0)
+                {
+                    jalan = false;
+                }
+                else
+                {
+                    if (papan[y, x] == 3 || papan[y, x] == 5)
+                    {
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, x, y, "black", "bawah", 0);
+                        if (historycounter.Count > 0)
+                        {
+                            if (hasil > historycounter.Min())
+                            {
+                                hasil = historycounter.Min();
+                            }
+                        }
+                        y--;
+                    }
+                    else
+                    {
+                        jalan = false;
+                    }
+                }
+            }
+        }
+        return hasil;
     }
     private int terminal_recur_menang(int[,] papan, List<Bidak> papangame, string cari)
     {
@@ -267,83 +481,98 @@ public class ai : MonoBehaviour
         //untuk membuat pojok kiri dan atas menjadi sesuai yang dicari jika pada baris itu ada
         foreach (var bruh in list_papan_cek)
         {
-            if (hasil == 5)
+            var bruhcopy = clonepapancek(bruh);
+            for (int y = 0; y < 6; y++)
             {
-                break;
+                for (int x = 0; x < 6; x++)
+                {
+                    int angkcari = cari == "white" ? 0 : 3;
+                    int angkcarii = cari == "white" ? 2 : 5;
+                    int ganti = cari == "white" ? 0 : 3;
+                    int tidakbisagantikalauangka = cari == "white" ? 3 : 0;
+                    int tidakbisagantikalauangkaa = cari == "white" ? 4 : 1;
+                    int tidakbisagantikalauangkaaa = cari == "white" ? 5 : 2;
+                    if (bruh[y, x] == angkcari || bruh[y, x] == angkcarii)
+                    {
+                        //meskipun yang diganti capstone (misal yang ujung sudah ada dan itu capstone) tidak masalah kareana akan tetap warna itu
+                        if (bruh[0, x] != tidakbisagantikalauangka && bruh[0, x] != tidakbisagantikalauangkaa && bruh[0, x] != tidakbisagantikalauangkaaa)
+                        {
+                            bruhcopy[0, x] = ganti;
+                        }
+                        if (bruh[y, 0] != tidakbisagantikalauangka && bruh[y, 0] != tidakbisagantikalauangkaa && bruh[y, 0] != tidakbisagantikalauangkaaa)
+                        {
+                            bruhcopy[y, 0] = ganti;
+                        }
+                        if (bruh[5, x] != tidakbisagantikalauangka && bruh[5, x] != tidakbisagantikalauangkaa && bruh[5, x] != tidakbisagantikalauangkaaa)
+                        {
+                            bruhcopy[5, x] = ganti;
+                        }
+                        if (bruh[y, 5] != tidakbisagantikalauangka && bruh[y, 5] != tidakbisagantikalauangkaa && bruh[y, 5] != tidakbisagantikalauangkaaa)
+                        {
+                            bruhcopy[y, 5] = ganti;
+                        }
+                    }
+                }
             }
-            else
+            var papane = clonepapancek(bruhcopy);
+            //ganti papan yang null dengan yang dicari
+            if (cari == "white")
             {
-                var bruhcopy = clonepapancek(bruh);
                 for (int y = 0; y < 6; y++)
                 {
                     for (int x = 0; x < 6; x++)
                     {
-                        int angkcari = cari == "white" ? 0 : 3;
-                        int angkcarii = cari == "white" ? 2 : 5;
-                        int ganti = cari == "white" ? 0 : 3;
-                        int tidakbisagantikalauangka = cari == "white" ? 3 : 0;
-                        int tidakbisagantikalauangkaa = cari == "white" ? 4 : 1;
-                        int tidakbisagantikalauangkaaa = cari == "white" ? 5 : 2;
-                        if (bruh[y, x] == angkcari || bruh[y, x] == angkcarii)
+                        if (papane[y, x] == -1)
                         {
-                            //meskipun yang diganti capstone (misal yang ujung sudah ada dan itu capstone) tidak masalah kareana akan tetap warna itu
-                            if (bruh[0, x] != tidakbisagantikalauangka && bruh[0, x] != tidakbisagantikalauangkaa && bruh[0, x] != tidakbisagantikalauangkaaa)
-                            {
-                                bruhcopy[0, x] = ganti;
-                            }
-                            if (bruh[y, 0] != tidakbisagantikalauangka && bruh[y, 0] != tidakbisagantikalauangkaa && bruh[y, 0] != tidakbisagantikalauangkaaa)
-                            {
-                                bruhcopy[y, 0] = ganti;
-                            }
-                            if (bruh[5, x] != tidakbisagantikalauangka && bruh[5, x] != tidakbisagantikalauangkaa && bruh[5, x] != tidakbisagantikalauangkaaa)
-                            {
-                                bruhcopy[5, x] = ganti;
-                            }
-                            if (bruh[y, 5] != tidakbisagantikalauangka && bruh[y, 5] != tidakbisagantikalauangkaa && bruh[y, 5] != tidakbisagantikalauangkaaa)
-                            {
-                                bruhcopy[y, 5] = ganti;
-                            }
+                            papane[y, x] = 0;
                         }
                     }
                 }
-                var papane = clonepapancek(bruhcopy);
-                //ganti papan yang null dengan yang dicari
-                if (cari == "white")
-                {
-                    for (int y = 0; y < 6; y++)
-                    {
-                        for (int x = 0; x < 6; x++)
-                        {
-                            if (papane[y, x] == -1)
-                            {
-                                papane[y, x] = 0;
-                            }
-                        }
-                    }
-                }
-                else if (cari == "black")
-                {
-                    for (int y = 0; y < 6; y++)
-                    {
-                        for (int x = 0; x < 6; x++)
-                        {
-                            if (papane[y, x] == -1)
-                            {
-                                papane[y, x] = 3;
-                            }
-                        }
-                    }
-                }
-                // pencarian dari kiri ke kanan
+            }
+            else if (cari == "black")
+            {
                 for (int y = 0; y < 6; y++)
+                {
+                    for (int x = 0; x < 6; x++)
+                    {
+                        if (papane[y, x] == -1)
+                        {
+                            papane[y, x] = 3;
+                        }
+                    }
+                }
+            }
+            // pencarian dari kiri ke kanan
+            for (int y = 0; y < 6; y++)
+            {
+                int angkcari = cari == "white" ? 0 : 3;
+                int angkcarii = cari == "white" ? 2 : 5;
+                //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
+                if (bruh[y, 0] == angkcari || bruh[y, 0] == angkcarii)
+                {
+                    historycounter.Clear();
+                    recurpossiblemenang(papane, 0, y, cari, "kiri", 0);
+                    if (historycounter.Count > 0)
+                    {
+                        if (hasil > historycounter.Min())
+                        {
+                            hasil = historycounter.Min();
+                        }
+                    }
+                }
+            }
+            if (hasil > 5)
+            {
+                // pencarian dari atas ke bawah
+                for (int x = 0; x < 6; x++)
                 {
                     int angkcari = cari == "white" ? 0 : 3;
                     int angkcarii = cari == "white" ? 2 : 5;
                     //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
-                    if (bruh[y, 0] == angkcari || bruh[y, 0] == angkcarii)
+                    if (bruh[0, x] == angkcari || bruh[0, x] == angkcarii)
                     {
                         historycounter.Clear();
-                        recurpossiblemenang(papane, 0, y, cari, "kiri", 0);
+                        recurpossiblemenang(papane, x, 0, cari, "atas", 0);
                         if (historycounter.Count > 0)
                         {
                             if (hasil > historycounter.Min())
@@ -353,68 +582,46 @@ public class ai : MonoBehaviour
                         }
                     }
                 }
-                if (hasil > 5)
+            }
+            if (hasil > 5)
+            {
+                // pencarian dari kanan ke kiri
+                for (int y = 0; y < 6; y++)
                 {
-                    // pencarian dari atas ke bawah
-                    for (int x = 0; x < 6; x++)
+                    int angkcari = cari == "white" ? 0 : 3;
+                    int angkcarii = cari == "white" ? 2 : 5;
+                    //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
+                    if (bruh[y, 5] == angkcari || bruh[y, 5] == angkcarii)
                     {
-                        int angkcari = cari == "white" ? 0 : 3;
-                        int angkcarii = cari == "white" ? 2 : 5;
-                        //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
-                        if (bruh[0, x] == angkcari || bruh[0, x] == angkcarii)
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, 5, y, cari, "kanan", 0);
+                        if (historycounter.Count > 0)
                         {
-                            historycounter.Clear();
-                            recurpossiblemenang(papane, x, 0, cari, "atas", 0);
-                            if (historycounter.Count > 0)
+                            if (hasil > historycounter.Min())
                             {
-                                if (hasil > historycounter.Min())
-                                {
-                                    hasil = historycounter.Min();
-                                }
+                                hasil = historycounter.Min();
                             }
                         }
                     }
                 }
-                if (hasil > 5)
+            }
+            if (hasil > 5)
+            {
+                // pencarian dari bawah ke atas
+                for (int x = 0; x < 6; x++)
                 {
-                    // pencarian dari kanan ke kiri
-                    for (int y = 0; y < 6; y++)
+                    int angkcari = cari == "white" ? 0 : 3;
+                    int angkcarii = cari == "white" ? 2 : 5;
+                    //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
+                    if (bruh[5, x] == angkcari || bruh[5, x] == angkcarii)
                     {
-                        int angkcari = cari == "white" ? 0 : 3;
-                        int angkcarii = cari == "white" ? 2 : 5;
-                        //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
-                        if (bruh[y, 5] == angkcari || bruh[y, 5] == angkcarii)
+                        historycounter.Clear();
+                        recurpossiblemenang(papane, x, 5, cari, "bawah", 0);
+                        if (historycounter.Count > 0)
                         {
-                            historycounter.Clear();
-                            recurpossiblemenang(papane, 5, y, cari, "kanan", 0);
-                            if (historycounter.Count > 0)
+                            if (hasil > historycounter.Min())
                             {
-                                if (hasil > historycounter.Min())
-                                {
-                                    hasil = historycounter.Min();
-                                }
-                            }
-                        }
-                    }
-                }
-                if (hasil > 5)
-                {
-                    // pencarian dari bawah ke atas
-                    for (int x = 0; x < 6; x++)
-                    {
-                        int angkcari = cari == "white" ? 0 : 3;
-                        int angkcarii = cari == "white" ? 2 : 5;
-                        //yang pucuk kiri bukan bidka yang dicari maka skip, misal cari putih jika ujung kiri baris itu bukan putih di skip
-                        if (bruh[5, x] == angkcari || bruh[5, x] == angkcarii)
-                        {
-                            historycounter.Clear();
-                            recurpossiblemenang(papane, x, 5, cari, "bawah", 0);
-                            if (historycounter.Count > 0)
-                            {
-                                if (hasil > historycounter.Min())
-                                {
-                                    hasil = historycounter.Min();
-                                }
+                                hasil = historycounter.Min();
                             }
                         }
                     }
@@ -448,7 +655,6 @@ public class ai : MonoBehaviour
                         var hasilmenang = cekmenang.cekmenang(xx.papan_cek);
                         if (hasilmenang == 1)
                         {
-                            // print("yoe");
                             baru.value = -1000000;
                         }
                         else if (hasilmenang == 2)
@@ -788,11 +994,12 @@ public class ai : MonoBehaviour
                     bidakbaru = new Bidak(false, namabidaktaruh, 2);
                     papanclone[i] = bidakbaru;
                     catatprobpapan(papanclone);
+
                 }
                 if (adacapstone == 1)
                 {
-                    //jika masih ada captstone
-                    Bidak bidakbaru = new Bidak(true, namabidaktaruh, 1);
+                    // jika masih ada captstone
+                    Bidak bidakbaru = new Bidak(true, warnabidak + "31", 1);
                     papanclone[i] = bidakbaru;
                     catatprobpapan(papanclone);
                 }
@@ -819,20 +1026,20 @@ public class ai : MonoBehaviour
                     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
                     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
                 }
-                banyakchildsebelumnya = global_children_minimaxnode.Count;
-                generatekombinasigerakatas(bidakbayangan, papanclone, i);
-                if (banyakchildsebelumnya != global_children_minimaxnode.Count)
-                {
-                    //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
-                    global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
-                }
-                banyakchildsebelumnya = global_children_minimaxnode.Count;
-                generatekombinasigerakbawah(bidakbayangan, papanclone, i);
-                if (banyakchildsebelumnya != global_children_minimaxnode.Count)
-                {
-                    //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
-                    global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
-                }
+                // banyakchildsebelumnya = global_children_minimaxnode.Count;
+                // generatekombinasigerakatas(bidakbayangan, papanclone, i);
+                // if (banyakchildsebelumnya != global_children_minimaxnode.Count)
+                // {
+                //     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
+                //     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
+                // }
+                // banyakchildsebelumnya = global_children_minimaxnode.Count;
+                // generatekombinasigerakbawah(bidakbayangan, papanclone, i);
+                // if (banyakchildsebelumnya != global_children_minimaxnode.Count)
+                // {
+                //     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
+                //     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
+                // }
             }
         }
     }
@@ -864,7 +1071,7 @@ public class ai : MonoBehaviour
                         }
                         if (papan[counter].iscapstone)
                         {
-                            isi = 3;
+                            isi = 2;
                         }
                     }
                     if (papan[counter].namabidak.Contains("black"))
@@ -891,82 +1098,94 @@ public class ai : MonoBehaviour
     {
         if (lokasi <= 35)
         {
-
-            if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+            if (curr.namabidak == "bidak_bayangan" && curr.children == null)
             {
-
+                catatprobpapan(papan);
             }
             else
             {
-                if (curr.namabidak == "bidak_bayangan" && curr.children == null)
+
+                //alur => geser semua bidak lalu turunin satu statu 
+
+                if ((lokasi + 1) % 6 == 0)
                 {
-                    catatprobpapan(papan);
+                    if (papan[lokasi] != null && !(papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+                    {
+                        //lepas semua bidak, karena sudah diujung
+                        var currjalan = clonebidak(curr);
+                        var papanjalan = clonepapan(papan);
+                        var telusuri = currjalan;
+                        while (telusuri.children != null)
+                        {
+                            //mencari paling bawah
+                            telusuri = telusuri.children;
+                        }
+                        //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
+                        papanjalan[lokasi].parent = telusuri;
+                        telusuri.children = papanjalan[lokasi];
+                        //curr.children karena curr pasti yang bayangan
+                        papanjalan[lokasi] = currjalan.children;
+                        currjalan.children = null;
+                        generatekombinasigerakkanan(currjalan, papanjalan, (lokasi + 1));
+                    }
                 }
                 else
                 {
-
-                    //alur => geser semua bidak lalu turunin satu statu 
-
-                    if ((lokasi + 1) % 6 == 0)
+                    var currjalan = clonebidak(curr);
+                    var papanjalan = clonepapan(papan);
+                    //geser semua bidak
+                    //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
+                    var telusuri = currjalan;
+                    while (telusuri.children != null)
                     {
-                        if (papan[lokasi] != null)
+                        telusuri = telusuri.children;
+                    }
+                    telusuri.parent.children = null;
+                    telusuri.parent = null;
+                    if (papanjalan[lokasi + 1] != null)
+                    {
+                        if (!(papanjalan[lokasi + 1].iscapstone || papanjalan[lokasi + 1].penomoran == 2))
                         {
-                            //lepas semua bidak, karena sudah diujung
-                            var currjalan = clonebidak(curr);
-                            var papanjalan = clonepapan(papan);
-                            var telusuri = currjalan;
-                            while (telusuri.children != null)
-                            {
-                                //mencari paling bawah
-                                telusuri = telusuri.children;
-                            }
-                            //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
-                            papanjalan[lokasi].parent = telusuri;
-                            telusuri.children = papanjalan[lokasi];
-                            //curr.children karena curr pasti yang bayangan
-                            papanjalan[lokasi] = currjalan.children;
-                            currjalan.children = null;
-                            generatekombinasigerakkanan(currjalan, papanjalan, (lokasi + 1));
+                            papanjalan[lokasi + 1].parent = telusuri;
+                            telusuri.children = papanjalan[lokasi + 1];
+                            papanjalan[lokasi + 1] = telusuri;
                         }
                     }
                     else
                     {
-                        var currjalan = clonebidak(curr);
-                        var papanjalan = clonepapan(papan);
-                        //geser semua bidak
-                        //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
-                        var telusuri = currjalan;
-                        while (telusuri.children != null)
+                        //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
+                        papanjalan[lokasi + 1] = telusuri;
+                    }
+                    generatekombinasigerakkanan(currjalan, papanjalan, (lokasi + 1));
+                    var currjalan2 = clonebidak(curr);
+                    var papanjalan2 = clonepapan(papan);
+                    var jalan = true;
+                    while (jalan)
+                    {
+                        if (currjalan2.children == null)
                         {
-                            telusuri = telusuri.children;
-                        }
-                        telusuri.parent.children = null;
-                        telusuri.parent = null;
-                        if (papanjalan[lokasi + 1] != null)
-                        {
-                            if (!(papanjalan[lokasi + 1].iscapstone || papanjalan[lokasi + 1].penomoran == 2))
-                            {
-                                papanjalan[lokasi + 1].parent = telusuri;
-                                telusuri.children = papanjalan[lokasi + 1];
-                                papanjalan[lokasi + 1] = telusuri;
-                            }
+                            jalan = false;
                         }
                         else
                         {
-                            //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
-                            papanjalan[lokasi + 1] = telusuri;
-                        }
-                        generatekombinasigerakkanan(currjalan, papanjalan, (lokasi + 1));
-                        var currjalan2 = clonebidak(curr);
-                        var papanjalan2 = clonepapan(papan);
-                        var jalan = true;
-                        while (jalan)
-                        {
-                            if (currjalan2.children == null)
+                            telusuri = currjalan2;
+                            while (telusuri.children != null)
                             {
-                                jalan = false;
+                                telusuri = telusuri.children;
                             }
-                            else
+                            telusuri.parent.children = null;
+                            telusuri.parent = null;
+                            //melepas satu bidak di tempat itu
+                            if (papanjalan2[lokasi] != null)
+                            {
+                                telusuri.children = papanjalan2[lokasi];
+                                papanjalan2[lokasi].parent = telusuri;
+
+                            }
+                            papanjalan2[lokasi] = telusuri;
+                            var bidakbck = clonebidak(currjalan2);
+                            var papanbck = clonepapan(papanjalan2);
+                            if (currjalan2.children != null)
                             {
                                 telusuri = currjalan2;
                                 while (telusuri.children != null)
@@ -975,43 +1194,24 @@ public class ai : MonoBehaviour
                                 }
                                 telusuri.parent.children = null;
                                 telusuri.parent = null;
-                                //melepas satu bidak di tempat itu
-                                if (papanjalan2[lokasi] != null)
+                                //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
+                                if (papanjalan2[lokasi + 1] != null)
                                 {
-                                    telusuri.children = papanjalan2[lokasi];
-                                    papanjalan2[lokasi].parent = telusuri;
-
-                                }
-                                papanjalan2[lokasi] = telusuri;
-                                var bidakbck = clonebidak(currjalan2);
-                                var papanbck = clonepapan(papanjalan2);
-                                if (currjalan2.children != null)
-                                {
-                                    telusuri = currjalan2;
-                                    while (telusuri.children != null)
+                                    if (!(papanjalan2[lokasi + 1].iscapstone || papanjalan2[lokasi + 1].penomoran == 2))
                                     {
-                                        telusuri = telusuri.children;
-                                    }
-                                    telusuri.parent.children = null;
-                                    telusuri.parent = null;
-                                    //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
-                                    if (papanjalan2[lokasi + 1] != null)
-                                    {
-                                        if (!(papanjalan2[lokasi + 1].iscapstone || papanjalan2[lokasi + 1].penomoran == 2))
-                                        {
-                                            papanjalan2[lokasi + 1].parent = telusuri;
-                                            telusuri.children = papanjalan2[lokasi + 1];
-                                        }
-                                    }
-                                    else
-                                    {
+                                        papanjalan2[lokasi + 1].parent = telusuri;
+                                        telusuri.children = papanjalan2[lokasi + 1];
                                         papanjalan2[lokasi + 1] = telusuri;
                                     }
                                 }
-                                generatekombinasigerakkanan(currjalan2, papanjalan2, (lokasi + 1));
-                                papanjalan2 = clonepapan(papanbck);
-                                currjalan2 = clonebidak(bidakbck);
+                                else
+                                {
+                                    papanjalan2[lokasi + 1] = telusuri;
+                                }
                             }
+                            generatekombinasigerakkanan(currjalan2, papanjalan2, (lokasi + 1));
+                            papanjalan2 = clonepapan(papanbck);
+                            currjalan2 = clonebidak(bidakbck);
                         }
                     }
                 }
@@ -1022,80 +1222,93 @@ public class ai : MonoBehaviour
     {
         if (lokasi >= 0)
         {
-
-            if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+            if (curr.namabidak == "bidak_bayangan" && curr.children == null)
             {
-
+                catatprobpapan(papan);
             }
             else
             {
-                if (curr.namabidak == "bidak_bayangan" && curr.children == null)
+                //geser semua bidak lalu turunin satu statu 
+                if (lokasi % 6 == 0)
                 {
-                    catatprobpapan(papan);
+                    if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+                    {
+                        //lepas semua bidak, karena sudah diujung
+                        var currjalan = clonebidak(curr);
+                        var papanjalan = clonepapan(papan);
+                        var telusuri = currjalan;
+                        while (telusuri.children != null)
+                        {
+                            //mencari paling bawah
+                            telusuri = telusuri.children;
+                        }
+                        //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
+                        papanjalan[lokasi].parent = telusuri;
+                        telusuri.children = papanjalan[lokasi];
+                        //curr.children karena curr pasti yang bayangan
+                        papanjalan[lokasi] = currjalan.children;
+                        currjalan.children = null;
+                        generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
+                    }
                 }
                 else
                 {
-                    //geser semua bidak lalu turunin satu statu 
-                    if (lokasi % 6 == 0)
+                    var currjalan = clonebidak(curr);
+                    var papanjalan = clonepapan(papan);
+                    //geser semua bidak
+                    //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
+                    var telusuri = currjalan;
+                    while (telusuri.children != null)
                     {
-                        if (papan[lokasi] != null)
+                        telusuri = telusuri.children;
+                    }
+                    telusuri.parent.children = null;
+                    telusuri.parent = null;
+                    if (papanjalan[lokasi - 1] != null)
+                    {
+                        if (!(papanjalan[lokasi - 1].iscapstone || papanjalan[lokasi - 1].penomoran == 2))
                         {
-                            //lepas semua bidak, karena sudah diujung
-                            var currjalan = clonebidak(curr);
-                            var papanjalan = clonepapan(papan);
-                            var telusuri = currjalan;
-                            while (telusuri.children != null)
-                            {
-                                //mencari paling bawah
-                                telusuri = telusuri.children;
-                            }
-                            //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
-                            papanjalan[lokasi].parent = telusuri;
-                            telusuri.children = papanjalan[lokasi];
-                            //curr.children karena curr pasti yang bayangan
-                            papanjalan[lokasi] = currjalan.children;
-                            currjalan.children = null;
-                            generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
+                            papanjalan[lokasi - 1].parent = telusuri;
+                            telusuri.children = papanjalan[lokasi - 1];
+                            papanjalan[lokasi - 1] = telusuri;
                         }
                     }
                     else
                     {
-                        var currjalan = clonebidak(curr);
-                        var papanjalan = clonepapan(papan);
-                        //geser semua bidak
-                        //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
-                        var telusuri = currjalan;
-                        while (telusuri.children != null)
+                        //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
+                        papanjalan[lokasi - 1] = telusuri;
+                    }
+                    generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
+                    var currjalan2 = clonebidak(curr);
+                    var papanjalan2 = clonepapan(papan);
+                    var jalan = true;
+                    while (jalan)
+                    {
+                        if (currjalan2.children == null)
                         {
-                            telusuri = telusuri.children;
-                        }
-                        telusuri.parent.children = null;
-                        telusuri.parent = null;
-                        if (papanjalan[lokasi - 1] != null)
-                        {
-                            if (!(papanjalan[lokasi - 1].iscapstone || papanjalan[lokasi - 1].penomoran == 2))
-                            {
-                                papanjalan[lokasi - 1].parent = telusuri;
-                                telusuri.children = papanjalan[lokasi - 1];
-                                papanjalan[lokasi - 1] = telusuri;
-                            }
+                            jalan = false;
                         }
                         else
                         {
-                            //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
-                            papanjalan[lokasi - 1] = telusuri;
-                        }
-                        generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
-                        var currjalan2 = clonebidak(curr);
-                        var papanjalan2 = clonepapan(papan);
-                        var jalan = true;
-                        while (jalan)
-                        {
-                            if (currjalan2.children == null)
+                            telusuri = currjalan2;
+                            while (telusuri.children != null)
                             {
-                                jalan = false;
+                                telusuri = telusuri.children;
                             }
-                            else
+                            telusuri.parent.children = null;
+                            telusuri.parent = null;
+                            //melepas satu bidak di tempat itu
+                            if (papanjalan2[lokasi] != null)
+                            {
+                                telusuri.children = papanjalan2[lokasi];
+                                papanjalan2[lokasi].parent = telusuri;
+
+                            }
+                            papanjalan2[lokasi] = telusuri;
+                            Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
+                            var bidakbck = clonebidak(currjalan2);
+                            var papanbck = clonepapan(papanjalan2);
+                            if (currjalan2.children != null)
                             {
                                 telusuri = currjalan2;
                                 while (telusuri.children != null)
@@ -1104,43 +1317,25 @@ public class ai : MonoBehaviour
                                 }
                                 telusuri.parent.children = null;
                                 telusuri.parent = null;
-                                //melepas satu bidak di tempat itu
-                                if (papanjalan2[lokasi] != null)
+                                //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
+                                if (papanjalan2[lokasi - 1] != null)
                                 {
-                                    telusuri.children = papanjalan2[lokasi];
-                                    papanjalan2[lokasi].parent = telusuri;
-
-                                }
-                                papanjalan2[lokasi] = telusuri;
-                                var bidakbck = clonebidak(currjalan2);
-                                var papanbck = clonepapan(papanjalan2);
-                                if (currjalan2.children != null)
-                                {
-                                    telusuri = currjalan2;
-                                    while (telusuri.children != null)
+                                    if (!(papanjalan2[lokasi - 1].iscapstone || papanjalan2[lokasi - 1].penomoran == 2))
                                     {
-                                        telusuri = telusuri.children;
-                                    }
-                                    telusuri.parent.children = null;
-                                    telusuri.parent = null;
-                                    //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
-                                    if (papanjalan2[lokasi - 1] != null)
-                                    {
-                                        if (!(papanjalan2[lokasi - 1].iscapstone || papanjalan2[lokasi - 1].penomoran == 2))
-                                        {
-                                            papanjalan2[lokasi - 1].parent = telusuri;
-                                            telusuri.children = papanjalan2[lokasi - 1];
-                                        }
-                                    }
-                                    else
-                                    {
+                                        papanjalan2[lokasi - 1].parent = telusuri;
+                                        telusuri.children = papanjalan2[lokasi - 1];
                                         papanjalan2[lokasi - 1] = telusuri;
                                     }
                                 }
-                                generatekombinasigerakkiri(currjalan2, papanjalan2, (lokasi - 1));
-                                papanjalan2 = clonepapan(papanbck);
-                                currjalan2 = clonebidak(bidakbck);
+                                else
+                                {
+                                    papanjalan2[lokasi - 1] = telusuri;
+                                }
                             }
+                            Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " oke sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
+                            generatekombinasigerakkiri(currjalan2, papanjalan2, (lokasi - 1));
+                            papanjalan2 = clonepapan(papanbck);
+                            currjalan2 = clonebidak(bidakbck);
                         }
                     }
                 }
@@ -1151,82 +1346,94 @@ public class ai : MonoBehaviour
     {
         if (lokasi >= 0)
         {
-
-            if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+            if (curr.namabidak == "bidak_bayangan" && curr.children == null)
             {
-
+                catatprobpapan(papan);
             }
             else
             {
-                if (curr.namabidak == "bidak_bayangan" && curr.children == null)
+                //geser semua bidak lalu turunin satu statu 
+                if (Math.Floor(lokasi / 6f) == 0)
                 {
-                    catatprobpapan(papan);
+                    if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+                    {
+                        //karena kalau null itu pasti naruh di papan sendiri
+
+                        //lepas semua bidak, karena sudah diujung
+                        var currjalan = clonebidak(curr);
+                        var papanjalan = clonepapan(papan);
+                        var telusuri = currjalan;
+                        while (telusuri.children != null)
+                        {
+                            //mencari paling bawah
+                            telusuri = telusuri.children;
+                        }
+                        //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
+                        papanjalan[lokasi].parent = telusuri;
+                        telusuri.children = papanjalan[lokasi];
+                        //curr.children karena curr pasti yang bayangan
+                        papanjalan[lokasi] = currjalan.children;
+                        currjalan.children = null;
+                        generatekombinasigerakatas(currjalan, papanjalan, (lokasi - 6));
+                    }
                 }
                 else
                 {
-                    //geser semua bidak lalu turunin satu statu 
-                    if (Math.Floor(lokasi / 6f) == 0)
+                    var currjalan = clonebidak(curr);
+                    var papanjalan = clonepapan(papan);
+                    //geser semua bidak
+                    //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
+                    var telusuri = currjalan;
+                    while (telusuri.children != null)
                     {
-                        if (papan[lokasi] != null)
+                        telusuri = telusuri.children;
+                    }
+                    telusuri.parent.children = null;
+                    telusuri.parent = null;
+                    if (papanjalan[lokasi - 6] != null)
+                    {
+                        if (!(papanjalan[lokasi - 6].iscapstone || papanjalan[lokasi - 6].penomoran == 2))
                         {
-                            //karena kalau null itu pasti naruh di papan sendiri
-
-                            //lepas semua bidak, karena sudah diujung
-                            var currjalan = clonebidak(curr);
-                            var papanjalan = clonepapan(papan);
-                            var telusuri = currjalan;
-                            while (telusuri.children != null)
-                            {
-                                //mencari paling bawah
-                                telusuri = telusuri.children;
-                            }
-                            //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
-                            papanjalan[lokasi].parent = telusuri;
-                            telusuri.children = papanjalan[lokasi];
-                            //curr.children karena curr pasti yang bayangan
-                            papanjalan[lokasi] = currjalan.children;
-                            currjalan.children = null;
-                            generatekombinasigerakatas(currjalan, papanjalan, (lokasi - 6));
+                            papanjalan[lokasi - 6].parent = telusuri;
+                            telusuri.children = papanjalan[lokasi - 6];
+                            papanjalan[lokasi - 6] = telusuri;
                         }
                     }
                     else
                     {
-                        var currjalan = clonebidak(curr);
-                        var papanjalan = clonepapan(papan);
-                        //geser semua bidak
-                        //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
-                        var telusuri = currjalan;
-                        while (telusuri.children != null)
+                        //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
+                        papanjalan[lokasi - 6] = telusuri;
+                    }
+                    generatekombinasigerakatas(currjalan, papanjalan, (lokasi - 6));
+                    var currjalan2 = clonebidak(curr);
+                    var papanjalan2 = clonepapan(papan);
+                    var jalan = true;
+                    while (jalan)
+                    {
+                        if (currjalan2.children == null)
                         {
-                            telusuri = telusuri.children;
-                        }
-                        telusuri.parent.children = null;
-                        telusuri.parent = null;
-                        if (papanjalan[lokasi - 6] != null)
-                        {
-                            if (!(papanjalan[lokasi - 6].iscapstone || papanjalan[lokasi - 6].penomoran == 2))
-                            {
-                                papanjalan[lokasi - 6].parent = telusuri;
-                                telusuri.children = papanjalan[lokasi - 6];
-                                papanjalan[lokasi - 6] = telusuri;
-                            }
+                            jalan = false;
                         }
                         else
                         {
-                            //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
-                            papanjalan[lokasi - 6] = telusuri;
-                        }
-                        generatekombinasigerakatas(currjalan, papanjalan, (lokasi - 6));
-                        var currjalan2 = clonebidak(curr);
-                        var papanjalan2 = clonepapan(papan);
-                        var jalan = true;
-                        while (jalan)
-                        {
-                            if (currjalan2.children == null)
+                            telusuri = currjalan2;
+                            while (telusuri.children != null)
                             {
-                                jalan = false;
+                                telusuri = telusuri.children;
                             }
-                            else
+                            telusuri.parent.children = null;
+                            telusuri.parent = null;
+                            //melepas satu bidak di tempat itu
+                            if (papanjalan2[lokasi] != null)
+                            {
+                                telusuri.children = papanjalan2[lokasi];
+                                papanjalan2[lokasi].parent = telusuri;
+
+                            }
+                            papanjalan2[lokasi] = telusuri;
+                            var bidakbck = clonebidak(currjalan2);
+                            var papanbck = clonepapan(papanjalan2);
+                            if (currjalan2.children != null)
                             {
                                 telusuri = currjalan2;
                                 while (telusuri.children != null)
@@ -1235,43 +1442,24 @@ public class ai : MonoBehaviour
                                 }
                                 telusuri.parent.children = null;
                                 telusuri.parent = null;
-                                //melepas satu bidak di tempat itu
-                                if (papanjalan2[lokasi] != null)
+                                //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
+                                if (papanjalan2[lokasi - 6] != null)
                                 {
-                                    telusuri.children = papanjalan2[lokasi];
-                                    papanjalan2[lokasi].parent = telusuri;
-
-                                }
-                                papanjalan2[lokasi] = telusuri;
-                                var bidakbck = clonebidak(currjalan2);
-                                var papanbck = clonepapan(papanjalan2);
-                                if (currjalan2.children != null)
-                                {
-                                    telusuri = currjalan2;
-                                    while (telusuri.children != null)
+                                    if (!(papanjalan2[lokasi - 6].iscapstone || papanjalan2[lokasi - 6].penomoran == 2))
                                     {
-                                        telusuri = telusuri.children;
-                                    }
-                                    telusuri.parent.children = null;
-                                    telusuri.parent = null;
-                                    //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
-                                    if (papanjalan2[lokasi - 6] != null)
-                                    {
-                                        if (!(papanjalan2[lokasi - 6].iscapstone || papanjalan2[lokasi - 6].penomoran == 2))
-                                        {
-                                            papanjalan2[lokasi - 6].parent = telusuri;
-                                            telusuri.children = papanjalan2[lokasi - 6];
-                                        }
-                                    }
-                                    else
-                                    {
+                                        papanjalan2[lokasi - 6].parent = telusuri;
+                                        telusuri.children = papanjalan2[lokasi - 6];
                                         papanjalan2[lokasi - 6] = telusuri;
                                     }
                                 }
-                                generatekombinasigerakatas(currjalan2, papanjalan2, (lokasi - 6));
-                                papanjalan2 = clonepapan(papanbck);
-                                currjalan2 = clonebidak(bidakbck);
+                                else
+                                {
+                                    papanjalan2[lokasi - 6] = telusuri;
+                                }
                             }
+                            generatekombinasigerakatas(currjalan2, papanjalan2, (lokasi - 6));
+                            papanjalan2 = clonepapan(papanbck);
+                            currjalan2 = clonebidak(bidakbck);
                         }
                     }
                 }
@@ -1282,80 +1470,92 @@ public class ai : MonoBehaviour
     {
         if (lokasi <= 35)
         {
-
-            if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+            if (curr.namabidak == "bidak_bayangan" && curr.children == null)
             {
-
+                catatprobpapan(papan);
             }
             else
             {
-                if (curr.namabidak == "bidak_bayangan" && curr.children == null)
+                //geser semua bidak lalu turunin satu statu 
+                if (Math.Floor(lokasi / 6f) == 5)
                 {
-                    catatprobpapan(papan);
+                    if (papan[lokasi] != null && (papan[lokasi].iscapstone || papan[lokasi].penomoran == 2))
+                    {
+                        //lepas semua bidak, karena sudah diujung
+                        var currjalan = clonebidak(curr);
+                        var papanjalan = clonepapan(papan);
+                        var telusuri = currjalan;
+                        while (telusuri.children != null)
+                        {
+                            //mencari paling bawah
+                            telusuri = telusuri.children;
+                        }
+                        //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
+                        papanjalan[lokasi].parent = telusuri;
+                        telusuri.children = papanjalan[lokasi];
+                        //curr.children karena curr pasti yang bayangan
+                        papanjalan[lokasi] = currjalan.children;
+                        currjalan.children = null;
+                        generatekombinasigerakbawah(currjalan, papanjalan, (lokasi + 6));
+                    }
                 }
                 else
                 {
-                    //geser semua bidak lalu turunin satu statu 
-                    if (Math.Floor(lokasi / 6f) == 5)
+                    var currjalan = clonebidak(curr);
+                    var papanjalan = clonepapan(papan);
+                    //geser semua bidak
+                    //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
+                    var telusuri = currjalan;
+                    while (telusuri.children != null)
                     {
-                        if (papan[lokasi] != null)
+                        telusuri = telusuri.children;
+                    }
+                    telusuri.parent.children = null;
+                    telusuri.parent = null;
+                    if (papanjalan[lokasi + 6] != null)
+                    {
+                        if (!(papanjalan[lokasi + 6].iscapstone || papanjalan[lokasi + 6].penomoran == 2))
                         {
-                            //lepas semua bidak, karena sudah diujung
-                            var currjalan = clonebidak(curr);
-                            var papanjalan = clonepapan(papan);
-                            var telusuri = currjalan;
-                            while (telusuri.children != null)
-                            {
-                                //mencari paling bawah
-                                telusuri = telusuri.children;
-                            }
-                            //tidak dicek apakah null, karena sudah pasti ada isinya dan tidak mungkin juga untuk menaruh di tempat ujung jika stacknya diujung
-                            papanjalan[lokasi].parent = telusuri;
-                            telusuri.children = papanjalan[lokasi];
-                            //curr.children karena curr pasti yang bayangan
-                            papanjalan[lokasi] = currjalan.children;
-                            currjalan.children = null;
-                            generatekombinasigerakbawah(currjalan, papanjalan, (lokasi + 6));
+                            papanjalan[lokasi + 6].parent = telusuri;
+                            telusuri.children = papanjalan[lokasi + 6];
+                            papanjalan[lokasi + 6] = telusuri;
                         }
                     }
                     else
                     {
-                        var currjalan = clonebidak(curr);
-                        var papanjalan = clonepapan(papan);
-                        //geser semua bidak
-                        //setting bidak paling bawah ke papan selanjutnya, bidak yang lagi di select (curr) tidak perlu dipindah papan nya
-                        var telusuri = currjalan;
-                        while (telusuri.children != null)
+                        //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
+                        papanjalan[lokasi + 6] = telusuri;
+                    }
+                    generatekombinasigerakbawah(currjalan, papanjalan, (lokasi + 6));
+                    var currjalan2 = clonebidak(curr);
+                    var papanjalan2 = clonepapan(papan);
+                    var jalan = true;
+                    while (jalan)
+                    {
+                        if (currjalan2.children == null)
                         {
-                            telusuri = telusuri.children;
-                        }
-                        telusuri.parent.children = null;
-                        telusuri.parent = null;
-                        if (papanjalan[lokasi + 6] != null)
-                        {
-                            if (!(papanjalan[lokasi + 6].iscapstone || papanjalan[lokasi + 6].penomoran == 2))
-                            {
-                                papanjalan[lokasi + 6].parent = telusuri;
-                                telusuri.children = papanjalan[lokasi + 6];
-                                papanjalan[lokasi + 6] = telusuri;
-                            }
+                            jalan = false;
                         }
                         else
                         {
-                            //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
-                            papanjalan[lokasi + 6] = telusuri;
-                        }
-                        generatekombinasigerakbawah(currjalan, papanjalan, (lokasi + 6));
-                        var currjalan2 = clonebidak(curr);
-                        var papanjalan2 = clonepapan(papan);
-                        var jalan = true;
-                        while (jalan)
-                        {
-                            if (currjalan2.children == null)
+                            telusuri = currjalan2;
+                            while (telusuri.children != null)
                             {
-                                jalan = false;
+                                telusuri = telusuri.children;
                             }
-                            else
+                            telusuri.parent.children = null;
+                            telusuri.parent = null;
+                            //melepas satu bidak di tempat itu
+                            if (papanjalan2[lokasi] != null)
+                            {
+                                telusuri.children = papanjalan2[lokasi];
+                                papanjalan2[lokasi].parent = telusuri;
+
+                            }
+                            papanjalan2[lokasi] = telusuri;
+                            var bidakbck = clonebidak(currjalan2);
+                            var papanbck = clonepapan(papanjalan2);
+                            if (currjalan2.children != null)
                             {
                                 telusuri = currjalan2;
                                 while (telusuri.children != null)
@@ -1364,43 +1564,24 @@ public class ai : MonoBehaviour
                                 }
                                 telusuri.parent.children = null;
                                 telusuri.parent = null;
-                                //melepas satu bidak di tempat itu
-                                if (papanjalan2[lokasi] != null)
+                                //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
+                                if (papanjalan2[lokasi + 6] != null)
                                 {
-                                    telusuri.children = papanjalan2[lokasi];
-                                    papanjalan2[lokasi].parent = telusuri;
-
-                                }
-                                papanjalan2[lokasi] = telusuri;
-                                var bidakbck = clonebidak(currjalan2);
-                                var papanbck = clonepapan(papanjalan2);
-                                if (currjalan2.children != null)
-                                {
-                                    telusuri = currjalan2;
-                                    while (telusuri.children != null)
+                                    if (!(papanjalan2[lokasi + 6].iscapstone || papanjalan2[lokasi + 6].penomoran == 2))
                                     {
-                                        telusuri = telusuri.children;
-                                    }
-                                    telusuri.parent.children = null;
-                                    telusuri.parent = null;
-                                    //memindahkan bidak terakhir dari yang masih di select ke papan selanjutnya dan ditaruh
-                                    if (papanjalan2[lokasi + 6] != null)
-                                    {
-                                        if (!(papanjalan2[lokasi + 6].iscapstone || papanjalan2[lokasi + 6].penomoran == 2))
-                                        {
-                                            papanjalan2[lokasi + 6].parent = telusuri;
-                                            telusuri.children = papanjalan2[lokasi + 6];
-                                        }
-                                    }
-                                    else
-                                    {
+                                        papanjalan2[lokasi + 6].parent = telusuri;
+                                        telusuri.children = papanjalan2[lokasi + 6];
                                         papanjalan2[lokasi + 6] = telusuri;
                                     }
                                 }
-                                generatekombinasigerakbawah(currjalan2, papanjalan2, (lokasi + 6));
-                                papanjalan2 = clonepapan(papanbck);
-                                currjalan2 = clonebidak(bidakbck);
+                                else
+                                {
+                                    papanjalan2[lokasi + 6] = telusuri;
+                                }
                             }
+                            generatekombinasigerakbawah(currjalan2, papanjalan2, (lokasi + 6));
+                            papanjalan2 = clonepapan(papanbck);
+                            currjalan2 = clonebidak(bidakbck);
                         }
                     }
                 }
