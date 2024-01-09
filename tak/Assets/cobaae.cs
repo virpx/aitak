@@ -50,15 +50,24 @@ public class cobaae : MonoBehaviour
             string childe = "";
             if (datagame.papan_game[i] != null)
             {
-                namae = datagame.papan_game[i].namabidak+" == "+datagame.papan_game[i].penomoran;
+                namae = datagame.papan_game[i].namabidak + " == " + datagame.papan_game[i].penomoran;
                 var telusuri = datagame.papan_game[i];
                 while (telusuri.children != null)
                 {
-                    childe += datagame.papan_game[i].children.namabidak+" == "+datagame.papan_game[i].children.penomoran + "," ;
+                    childe += datagame.papan_game[i].children.namabidak + " == " + datagame.papan_game[i].children.penomoran + ",";
                     telusuri = telusuri.children;
                 }
             }
-            Debug.Log(i + ":" + namae+" children e : "+childe);
+            Debug.Log(i + ":" + namae + " children e : " + childe);
         }
+        // for (int i = 0; i < 36; i++)
+        // {
+        //     string namae = "";
+        //     if (papan[i] != null)
+        //     {
+        //         namae = papan[i].namabidak + " == " + papan[i].penomoran;
+        //     }
+        //     Debug.Log(i + ":" + namae + " children e : " + childe);
+        // }
     }
 }

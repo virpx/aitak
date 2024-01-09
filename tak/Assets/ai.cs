@@ -1007,6 +1007,9 @@ public class ai : MonoBehaviour
             else if (papanclone[i].namabidak.Contains(warnabidak))
             {
                 var bidakgeser = clonebidak(papanclone[i]);
+                // if(warnabidak == "black_"){
+                //     Debug.Log(i +" = "+bidakgeser.namabidak);
+                // }
                 papanclone[i] = null;
                 Bidak bidakbayangan = new Bidak(false, "bidak_bayangan", 1);
                 bidakbayangan.children = bidakgeser;
@@ -1020,26 +1023,26 @@ public class ai : MonoBehaviour
                     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
                 }
                 banyakchildsebelumnya = global_children_minimaxnode.Count;
-                generatekombinasigerakkiri(bidakbayangan, papanclone, i);
+                generatekombinasigerakkiri(bidakbayangan, papanclone, i, warnabidak);
                 if (banyakchildsebelumnya != global_children_minimaxnode.Count)
                 {
                     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
                     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
                 }
-                // banyakchildsebelumnya = global_children_minimaxnode.Count;
-                // generatekombinasigerakatas(bidakbayangan, papanclone, i);
-                // if (banyakchildsebelumnya != global_children_minimaxnode.Count)
-                // {
-                //     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
-                //     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
-                // }
-                // banyakchildsebelumnya = global_children_minimaxnode.Count;
-                // generatekombinasigerakbawah(bidakbayangan, papanclone, i);
-                // if (banyakchildsebelumnya != global_children_minimaxnode.Count)
-                // {
-                //     //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
-                //     global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
-                // }
+                banyakchildsebelumnya = global_children_minimaxnode.Count;
+                generatekombinasigerakatas(bidakbayangan, papanclone, i);
+                if (banyakchildsebelumnya != global_children_minimaxnode.Count)
+                {
+                    //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
+                    global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
+                }
+                banyakchildsebelumnya = global_children_minimaxnode.Count;
+                generatekombinasigerakbawah(bidakbayangan, papanclone, i);
+                if (banyakchildsebelumnya != global_children_minimaxnode.Count)
+                {
+                    //karena kalau gak bisa gesert dia akan tidak melakukan push apa-apa & kalau push akan menghasilkan taruh di bidak sendiri(itu yang dihapus)
+                    global_children_minimaxnode.RemoveAt(global_children_minimaxnode.Count - 1);
+                }
             }
         }
     }
@@ -1218,7 +1221,7 @@ public class ai : MonoBehaviour
             }
         }
     }
-    public void generatekombinasigerakkiri(Bidak curr, List<Bidak> papan, int lokasi)
+    public void generatekombinasigerakkiri(Bidak curr, List<Bidak> papan, int lokasi, string warna)
     {
         if (lokasi >= 0)
         {
@@ -1248,7 +1251,7 @@ public class ai : MonoBehaviour
                         //curr.children karena curr pasti yang bayangan
                         papanjalan[lokasi] = currjalan.children;
                         currjalan.children = null;
-                        generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
+                        generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1), warna);
                     }
                 }
                 else
@@ -1278,7 +1281,7 @@ public class ai : MonoBehaviour
                         //kita tidak perlu mensetting lokasi papan karena itu untuk mempermudah pembuatan di unity saja
                         papanjalan[lokasi - 1] = telusuri;
                     }
-                    generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1));
+                    generatekombinasigerakkiri(currjalan, papanjalan, (lokasi - 1), warna);
                     var currjalan2 = clonebidak(curr);
                     var papanjalan2 = clonepapan(papan);
                     var jalan = true;
@@ -1305,7 +1308,7 @@ public class ai : MonoBehaviour
 
                             }
                             papanjalan2[lokasi] = telusuri;
-                            Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
+                            // Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
                             var bidakbck = clonebidak(currjalan2);
                             var papanbck = clonepapan(papanjalan2);
                             if (currjalan2.children != null)
@@ -1332,8 +1335,17 @@ public class ai : MonoBehaviour
                                     papanjalan2[lokasi - 1] = telusuri;
                                 }
                             }
-                            Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " oke sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
-                            generatekombinasigerakkiri(currjalan2, papanjalan2, (lokasi - 1));
+                            // if (warna == "black_")
+                            // {
+                            //     Debug.Log("papan jalan 2  ke " + lokasi + " = " + papanjalan2[lokasi].namabidak + " oke sebelumnya " + (papanjalan2[lokasi - 1] != null ? papanjalan2[lokasi - 1].namabidak + "==" + papanjalan2[lokasi - 1].penomoran : "")); ;
+                            //     string namae = "";
+                            //     if (papanjalan2[3] != null)
+                            //     {
+                            //         namae = papanjalan2[3].namabidak + " == " + papanjalan2[3].penomoran;
+                            //     }
+                            //     Debug.Log("3 :" + namae);
+                            // }
+                            generatekombinasigerakkiri(currjalan2, papanjalan2, (lokasi - 1), warna);
                             papanjalan2 = clonepapan(papanbck);
                             currjalan2 = clonebidak(bidakbck);
                         }
